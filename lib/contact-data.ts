@@ -1,0 +1,70 @@
+export interface SocialLink {
+  platform: string
+  url: string
+  enabled: boolean
+}
+
+export interface ContactConfig {
+  id: string
+  description: string
+  address: string
+  city: string
+  country: string
+  phone: string
+  email: string
+  workingHours: {
+    weekdays: string
+    saturday: string
+  }
+  socialLinks: SocialLink[]
+  updatedAt: string
+}
+
+export let contactConfig: ContactConfig = {
+  id: "1",
+  description:
+    "Tu destino premium para tecnología de vanguardia, electrodomésticos inteligentes y fragancias exclusivas de las marcas más prestigiosas del mundo.",
+  address: "Av. Corrientes 1234",
+  city: "Buenos Aires",
+  country: "Argentina",
+  phone: "+54 9 11 2345-6789",
+  email: "contacto@techzone.com",
+  workingHours: {
+    weekdays: "Lun - Vie: 9:00 - 18:00",
+    saturday: "Sáb: 10:00 - 14:00",
+  },
+  socialLinks: [
+    { platform: "facebook", url: "https://facebook.com/techzone", enabled: true },
+    { platform: "instagram", url: "https://instagram.com/techzone", enabled: true },
+    { platform: "twitter", url: "https://twitter.com/techzone", enabled: true },
+    { platform: "linkedin", url: "https://linkedin.com/company/techzone", enabled: true },
+    { platform: "youtube", url: "https://youtube.com/techzone", enabled: true },
+  ],
+  updatedAt: new Date().toISOString(),
+}
+
+export const getContactConfig = (): ContactConfig => {
+  if (typeof window !== "undefined") {
+    const stored = localStorage.getItem("contact_config")
+    if (stored) {
+      contactConfig = JSON.parse(stored)
+    }
+  }
+  return contactConfig
+}
+
+export const updateContactConfig = (config: Partial<ContactConfig>): ContactConfig => {
+  contactConfig = {
+    ...contactConfig,
+    ...config,
+    updatedAt: new Date().toISOString(),
+  }
+
+  if (typeof window !== "undefined") {
+    localStorage.setItem("contact_config", JSON.stringify(contactConfig))
+    // Trigger storage event for other components
+    window.dispatchEvent(new Event("storage"))
+  }
+
+  return contactConfig
+}
