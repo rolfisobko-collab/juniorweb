@@ -52,6 +52,7 @@ export async function POST(req: Request) {
       },
     })
   } catch (_error) {
+    console.error("Admin login failed", _error)
     return NextResponse.json({ error: "Admin login failed" }, { status: 500 })
   }
 }
