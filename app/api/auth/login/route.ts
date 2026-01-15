@@ -4,6 +4,8 @@ import { cookies } from "next/headers"
 import { prisma } from "@/lib/db"
 import { cookieOptions, generateRefreshToken, hashToken, signAccessToken, verifyPassword } from "@/lib/auth-server"
 
+export const runtime = "nodejs"
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as { email?: string; password?: string }
@@ -43,6 +45,7 @@ export async function POST(req: Request) {
       user: { id: user.id, email: user.email, name: user.name, avatar: user.avatar },
     })
   } catch (_error) {
+    console.error("Login failed", _error)
     return NextResponse.json({ error: "Login failed" }, { status: 500 })
   }
 }

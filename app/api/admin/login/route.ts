@@ -4,6 +4,8 @@ import { cookies } from "next/headers"
 import { prisma } from "@/lib/db"
 import { cookieOptions, generateRefreshToken, hashToken, signAccessToken, verifyPassword } from "@/lib/auth-server"
 
+export const runtime = "nodejs"
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as { username?: string; password?: string }
