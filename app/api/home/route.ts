@@ -21,6 +21,7 @@ export async function GET() {
 
     return NextResponse.json({ carouselSlides, ctas, homeCategories })
   } catch (_error) {
+    console.error("Failed to fetch home content", _error)
     return NextResponse.json({ error: "Failed to fetch home content" }, { status: 500 })
   }
 }

@@ -11,6 +11,7 @@ export async function GET() {
 
     return NextResponse.json(items)
   } catch (_error) {
+    console.error("Failed to fetch home categories", _error)
     return NextResponse.json({ error: "Failed to fetch home categories" }, { status: 500 })
   }
 }
