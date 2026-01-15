@@ -23,6 +23,7 @@ yarn-error.log*
 .vercel
 
 # local smoke-test cookie jars
+.cookies.txt
 .cookies_*.txt
 
 # typescript
