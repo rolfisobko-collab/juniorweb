@@ -7,11 +7,16 @@ const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
 
 neonConfig.webSocketConstructor = WebSocket
 
+const DATABASE_URL = process.env.DATABASE_URL
+if (!DATABASE_URL) {
+  throw new Error("DATABASE_URL is not set")
+}
+
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     adapter: new PrismaNeon({
-      connectionString: process.env.DATABASE_URL ?? "",
+      connectionString: DATABASE_URL,
     }),
   })
 
