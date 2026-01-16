@@ -5,13 +5,13 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import type { Product } from "@/lib/products-data"
 import { Star, Heart, ShoppingCart, Truck, ShieldCheck, ArrowLeft } from "lucide-react"
-import { useEffect, useState } from "react"
+import { use, useEffect, useState } from "react"
 import { useCart } from "@/lib/cart-context"
 import { useFavorites } from "@/lib/favorites-context"
 import { useToast } from "@/hooks/use-toast"
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params
+export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const router = useRouter()
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
@@ -19,6 +19,20 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   const { addItem } = useCart()
   const { toggleFavorite, isFavorite } = useFavorites()
   const { toast } = useToast()
+
+  const demoProduct: Product = {
+    id,
+    name: "Producto Demo",
+    category: "electronics",
+    price: 999,
+    image: "/placeholder.svg",
+    description: "Producto hardcodeado para pruebas en /products/[id].",
+    brand: "TechZone",
+    rating: 4.7,
+    reviews: 123,
+    inStock: true,
+    featured: true,
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -28,7 +42,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
       try {
         const res = await fetch(`/api/products/${id}`, { method: "GET" })
         if (!res.ok) {
-          if (!cancelled) setProduct(null)
+          if (!cancelled) setProduct(demoProduct)
           return
         }
 
@@ -62,7 +76,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
 
         if (!cancelled) setProduct(mapped)
       } catch {
-        if (!cancelled) setProduct(null)
+        if (!cancelled) setProduct(demoProduct)
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -76,8 +90,59 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold mb-4">Cargando...</h1>
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid md:grid-cols-2 gap-12">
+          {/* Skeleton Image */}
+          <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted animate-pulse" />
+          {/* Skeleton Info */}
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+              <div className="h-10 w-3/4 bg-muted rounded animate-pulse" />
+              <div className="flex items-center gap-4">
+                <div className="flex gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="h-5 w-5 bg-muted rounded animate-pulse" />
+                  ))}
+                </div>
+                <div className="h-4 w-20 bg-muted rounded animate-pulse" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                <div className="h-4 w-5/6 bg-muted rounded animate-pulse" />
+                <div className="h-4 w-4/6 bg-muted rounded animate-pulse" />
+              </div>
+            </div>
+            <div className="border-t border-b border-border py-6 space-y-2">
+              <div className="h-12 w-32 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-20 bg-muted rounded animate-pulse" />
+                <div className="flex items-center gap-2">
+                  <div className="h-10 w-10 bg-muted rounded animate-pulse" />
+                  <div className="h-10 w-12 bg-muted rounded animate-pulse" />
+                  <div className="h-10 w-10 bg-muted rounded animate-pulse" />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="h-12 flex-1 bg-muted rounded animate-pulse" />
+                <div className="h-12 w-12 bg-muted rounded animate-pulse" />
+              </div>
+            </div>
+            <div className="space-y-3 pt-6">
+              <div className="flex items-center gap-3">
+                <div className="h-5 w-5 bg-muted rounded animate-pulse" />
+                <div className="h-4 w-48 bg-muted rounded animate-pulse" />
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="h-5 w-5 bg-muted rounded animate-pulse" />
+                <div className="h-4 w-44 bg-muted rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }

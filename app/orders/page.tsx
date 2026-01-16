@@ -48,12 +48,26 @@ export default function OrdersPage() {
         })
 
         if (!res.ok) {
-          if (!cancelled) setOrders([])
+          try {
+            const raw = localStorage.getItem("tz_demo_orders")
+            const parsed = (raw ? (JSON.parse(raw) as unknown[]) : []) as Order[]
+            if (!cancelled) setOrders(parsed)
+          } catch {
+            if (!cancelled) setOrders([])
+          }
           return
         }
 
         const data = (await res.json()) as { orders?: Order[] }
         if (!cancelled) setOrders(data.orders ?? [])
+      } catch {
+        try {
+          const raw = localStorage.getItem("tz_demo_orders")
+          const parsed = (raw ? (JSON.parse(raw) as unknown[]) : []) as Order[]
+          if (!cancelled) setOrders(parsed)
+        } catch {
+          if (!cancelled) setOrders([])
+        }
       } finally {
         if (!cancelled) setIsLoading(false)
       }

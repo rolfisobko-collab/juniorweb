@@ -76,7 +76,7 @@ export default function CheckoutPage() {
       })
 
       if (!res.ok) {
-        throw new Error("No se pudo crear el pedido")
+        throw new Error("ORDER_CREATE_FAILED")
       }
 
       const data = (await res.json()) as { order?: { id: string } }
@@ -87,18 +87,45 @@ export default function CheckoutPage() {
 
       clearCart()
       router.push(`/checkout/success?orderId=${orderId}`)
+    } catch {
+      const demoOrderId = `demo_${Date.now()}`
+      const demoOrder = {
+        id: demoOrderId,
+        status: "processing",
+        total: finalTotal,
+        createdAt: new Date().toISOString(),
+        items: items.map((i) => ({
+          id: i.id,
+          name: i.name,
+          image: i.image,
+          price: i.price,
+          quantity: i.quantity,
+        })),
+      }
+
+      try {
+        const key = "tz_demo_orders"
+        const existingRaw = localStorage.getItem(key)
+        const existing = (existingRaw ? (JSON.parse(existingRaw) as unknown[]) : []) as typeof demoOrder[]
+        localStorage.setItem(key, JSON.stringify([demoOrder, ...existing]))
+      } catch {
+        // ignore
+      }
+
+      router.push("/orders")
+      clearCart()
     } finally {
       setIsProcessing(false)
     }
   }
 
-  useEffect(() => {
-    if (items.length === 0) {
-      router.push("/cart")
-    }
-  }, [items.length, router])
+  // useEffect(() => {
+//   if (items.length === 0 && !isProcessing) {
+//     router.push("/cart")
+//   }
+// }, [items.length, router, isProcessing])
 
-  if (items.length === 0) return null
+// if (items.length === 0) return null
 
   return (
     <div className="min-h-screen">

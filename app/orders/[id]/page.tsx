@@ -8,6 +8,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useAuth } from "@/lib/auth-context"
+import { use } from "react"
 
 interface OrderItem {
   id: string
@@ -25,7 +26,8 @@ interface Order {
   items: OrderItem[]
 }
 
-export default function OrderDetailPage({ params }: { params: { id: string } }) {
+export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const { user } = useAuth()
   const router = useRouter()
   const [order, setOrder] = useState<Order | null>(null)
@@ -41,19 +43,37 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
 
     const load = async () => {
       try {
-        const res = await fetch(`/api/orders/${params.id}`, {
+        const res = await fetch(`/api/orders/${id}`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
         })
 
         if (!res.ok) {
-          if (!cancelled) setOrder(null)
+          // Fallback to localStorage demo orders
+          try {
+            const raw = localStorage.getItem("tz_demo_orders")
+            const parsed = (raw ? (JSON.parse(raw) as unknown[]) : []) as Order[]
+            const found = parsed.find((o) => o.id === id)
+            if (!cancelled) setOrder(found ?? null)
+          } catch {
+            if (!cancelled) setOrder(null)
+          }
           return
         }
 
         const data = (await res.json()) as { order?: Order }
         if (!cancelled) setOrder(data.order ?? null)
+      } catch {
+        // Fallback to localStorage demo orders
+        try {
+          const raw = localStorage.getItem("tz_demo_orders")
+          const parsed = (raw ? (JSON.parse(raw) as unknown[]) : []) as Order[]
+          const found = parsed.find((o) => o.id === id)
+          if (!cancelled) setOrder(found ?? null)
+        } catch {
+          if (!cancelled) setOrder(null)
+        }
       } finally {
         if (!cancelled) setIsLoading(false)
       }
@@ -63,7 +83,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
     return () => {
       cancelled = true
     }
-  }, [params.id, router, user])
+  }, [id, router, user])
 
   if (!user) return null
 

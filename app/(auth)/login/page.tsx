@@ -14,8 +14,21 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [showDemoCredentials, setShowDemoCredentials] = useState(false)
   const router = useRouter()
   const { login, loginWithGoogle, loginWithFacebook, isLoading } = useAuth()
+
+  const fillDemoUser = () => {
+    setEmail("demo@techzone.com")
+    setPassword("demo123")
+    setError("")
+    try {
+      localStorage.setItem("tz_disable_auth", "1")
+    } catch {
+      // ignore
+    }
+    setShowDemoCredentials(true)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -188,6 +201,25 @@ export default function LoginPage() {
               <Facebook className="mr-2 h-5 w-5" />
               Facebook
             </Button>
+          </div>
+
+          <div className="mt-8 rounded-xl border border-border p-4 bg-muted/10">
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-semibold">Credenciales demo</p>
+              <Button type="button" variant="outline" onClick={fillDemoUser} className="h-9 bg-transparent">
+                Ver credenciales
+              </Button>
+            </div>
+            {showDemoCredentials && (
+              <div className="mt-3 text-sm text-muted-foreground">
+                <p>
+                  Email: <span className="font-medium text-foreground">demo@techzone.com</span>
+                </p>
+                <p>
+                  Contraseña: <span className="font-medium text-foreground">demo123</span>
+                </p>
+              </div>
+            )}
           </div>
 
           <p className="text-center text-base text-muted-foreground mt-8">

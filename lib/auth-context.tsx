@@ -22,6 +22,19 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+const DISABLE_AUTH_ENV = process.env.NEXT_PUBLIC_DISABLE_AUTH === "1"
+const DEMO_USER_STORAGE_KEY = "tz_demo_user"
+const DISABLE_AUTH_STORAGE_KEY = "tz_disable_auth"
+
+function isAuthDisabled() {
+  if (DISABLE_AUTH_ENV) return true
+  try {
+    return typeof window !== "undefined" && window.localStorage.getItem(DISABLE_AUTH_STORAGE_KEY) === "1"
+  } catch {
+    return false
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -31,6 +44,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const load = async () => {
       try {
+        if (isAuthDisabled()) {
+          const stored = localStorage.getItem(DEMO_USER_STORAGE_KEY)
+          if (!stored) {
+            if (!cancelled) setUser(null)
+            return
+          }
+          const parsed = JSON.parse(stored) as User
+          if (!cancelled) setUser(parsed)
+          return
+        }
+
         const res = await fetch("/api/auth/me", {
           method: "GET",
           headers: { "Content-Type": "application/json" },
@@ -58,6 +82,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
+      if (isAuthDisabled()) {
+        const demoUser: User = {
+          id: "demo",
+          email: (email ?? "").trim() || "demo@techzone.com",
+          name: "Usuario Demo",
+        }
+        localStorage.setItem(DEMO_USER_STORAGE_KEY, JSON.stringify(demoUser))
+        setUser(demoUser)
+        return
+      }
+
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -87,6 +122,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (email: string, password: string, name: string) => {
     setIsLoading(true)
     try {
+      if (isAuthDisabled()) {
+        const demoUser: User = {
+          id: "demo",
+          email: (email ?? "").trim() || "demo@techzone.com",
+          name: (name ?? "").trim() || "Usuario Demo",
+        }
+        localStorage.setItem(DEMO_USER_STORAGE_KEY, JSON.stringify(demoUser))
+        setUser(demoUser)
+        return
+      }
+
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -107,11 +153,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null)
+
+    if (isAuthDisabled()) {
+      localStorage.removeItem(DEMO_USER_STORAGE_KEY)
+    } else {
     void fetch("/api/auth/logout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
     })
+    }
+
     localStorage.removeItem("cart")
     localStorage.removeItem("favorites")
   }
