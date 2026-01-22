@@ -7,6 +7,7 @@ import { AuthProvider } from "@/lib/auth-context"
 import { AdminProvider } from "@/lib/admin-context"
 import { CartProvider } from "@/lib/cart-context"
 import { FavoritesProvider } from "@/lib/favorites-context"
+import { CurrencyProvider } from "@/lib/currency-context"
 import { Header } from "@/components/header"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import Footer from "@/components/footer"
@@ -24,17 +25,28 @@ export default function ClientLayout({
     pathname === "/login" ||
     pathname === "/register" ||
     pathname === "/reset-password"
+  
+  // Detectar si es página 404 o no encontrada
+  const isNotFoundPage = 
+    pathname?.includes("404") || 
+    pathname?.includes("not-found") ||
+    pathname === "/404" ||
+    // Verificar si children es el componente NotFound
+    (children as any)?.type?.name === "NotFound" ||
+    (children as any)?.props?.children?.type?.name === "NotFound"
 
   return (
     <AuthProvider>
       <AdminProvider>
         <CartProvider>
           <FavoritesProvider>
-            <ScrollToTop />
-            {!isPanelRoute && !isAuthRoute && <Header />}
-            {children}
-            {!isPanelRoute && !isAuthRoute && <Footer />}
-            <Toaster />
+            <CurrencyProvider>
+              <ScrollToTop />
+              {!isPanelRoute && !isAuthRoute && !isNotFoundPage && <Header />}
+              {children}
+              {!isPanelRoute && !isAuthRoute && !isNotFoundPage && <Footer />}
+              <Toaster />
+            </CurrencyProvider>
           </FavoritesProvider>
         </CartProvider>
       </AdminProvider>

@@ -29,12 +29,12 @@ export function BrandingLogo({ href = "/", variant = "header", className = "" }:
   const isSidebar = variant === "sidebar"
 
   return (
-    <Link href={href} className={`flex items-center space-x-2 group ${className}`}>
+    <Link href={href} className={`flex items-center group ${className}`}>
       {branding.logoImage ? (
         <img
           src={branding.logoImage || "/placeholder.svg"}
           alt={branding.siteName}
-          className={`${isSidebar ? "h-8 w-8" : "h-10 w-10"} object-contain rounded-lg group-hover:scale-110 transition-transform`}
+          className={`${isSidebar ? "h-8 w-auto" : "h-10 w-auto"} object-contain rounded-lg group-hover:scale-110 transition-transform`}
         />
       ) : (
         <div
@@ -44,16 +44,6 @@ export function BrandingLogo({ href = "/", variant = "header", className = "" }:
             {branding.logoText}
           </span>
         </div>
-      )}
-      {isSidebar ? (
-        <div>
-          <span className="font-bold text-xl text-primary">{branding.siteName}</span>
-          <p className="text-xs text-muted-foreground">Panel de Control</p>
-        </div>
-      ) : (
-        <span className="font-sans text-2xl font-bold tracking-tight bg-gradient-to-r from-primary via-blue-600 to-primary bg-clip-text text-transparent">
-          {branding.siteName}
-        </span>
       )}
     </Link>
   )

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
-
-import { prisma } from "@/lib/db"
+import { adminUsers } from "@/lib/admin-users-data"
 import { verifyAccessToken } from "@/lib/auth-server"
 
 export async function GET() {
@@ -15,23 +14,26 @@ export async function GET() {
       return NextResponse.json({ admin: null }, { status: 401 })
     }
 
-    const admin = await prisma.adminUser.findUnique({
-      where: { id: payload.sub },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        name: true,
-        role: true,
-        permissions: true,
-        active: true,
+    // Buscar en el archivo de usuarios en lugar de la base de datos
+    const admin = adminUsers.find(u => u.id === payload.sub)
+    if (!admin || !admin.active) {
+      return NextResponse.json({ admin: null }, { status: 401 })
+    }
+
+    return NextResponse.json({
+      admin: {
+        id: admin.id,
+        email: admin.email,
+        username: admin.username,
+        name: admin.name,
+        role: admin.role,
+        permissions: admin.permissions,
+        active: admin.active,
+        lastLogin: admin.lastLogin,
       },
     })
-
-    if (!admin || !admin.active) return NextResponse.json({ admin: null }, { status: 401 })
-
-    return NextResponse.json({ admin })
   } catch (_error) {
-    return NextResponse.json({ admin: null }, { status: 401 })
+    console.error("Admin me failed", _error)
+    return NextResponse.json({ admin: null }, { status: 500 })
   }
 }

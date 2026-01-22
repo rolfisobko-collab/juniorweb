@@ -1,13 +1,23 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
-
-import { prisma } from "@/lib/db"
+import { adminUsers, initializePasswordHashes } from "@/lib/admin-users-data"
 import { cookieOptions, generateRefreshToken, hashToken, signAccessToken, verifyPassword } from "@/lib/auth-server"
 
 export const runtime = "nodejs"
 
+// Inicializar hashes de contraseñas
+let initialized = false
+const ensureHashesInitialized = async () => {
+  if (!initialized) {
+    await initializePasswordHashes()
+    initialized = true
+  }
+}
+
 export async function POST(req: Request) {
   try {
+    await ensureHashesInitialized()
+    
     const body = (await req.json()) as { username?: string; password?: string }
     const username = (body.username ?? "").trim()
     const password = body.password ?? ""
@@ -16,7 +26,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 })
     }
 
-    const admin = await prisma.adminUser.findUnique({ where: { username } })
+    // Buscar en el archivo de usuarios en lugar de la base de datos
+    const admin = adminUsers.find(u => u.username === username)
     if (!admin || !admin.active) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
@@ -26,18 +37,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    await prisma.adminUser.update({ where: { id: admin.id }, data: { lastLogin: new Date() } })
+    // Simular actualización de último login (no se puede guardar en archivo)
+    console.log(`Admin ${admin.username} logged in at ${new Date()}`)
 
     const accessToken = await signAccessToken({ sub: admin.id, typ: "admin" }, "15m")
     const refreshToken = generateRefreshToken()
-
-    await prisma.refreshToken.create({
-      data: {
-        tokenHash: hashToken(refreshToken),
-        adminUserId: admin.id,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
-      },
-    })
 
     const jar = await cookies()
     jar.set("tz_admin_access", accessToken, { ...cookieOptions(), maxAge: 60 * 15 })

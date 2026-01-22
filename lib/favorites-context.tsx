@@ -1,20 +1,20 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import type { Product } from "./products-data"
+import type { UnifiedProduct } from "./product-types"
 
 interface FavoritesContextType {
-  favorites: Product[]
-  addFavorite: (product: Product) => void
+  favorites: UnifiedProduct[]
+  addFavorite: (product: UnifiedProduct) => void
   removeFavorite: (productId: string) => void
   isFavorite: (productId: string) => boolean
-  toggleFavorite: (product: Product) => void
+  toggleFavorite: (product: UnifiedProduct) => void
 }
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined)
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
-  const [favorites, setFavorites] = useState<Product[]>([])
+  const [favorites, setFavorites] = useState<UnifiedProduct[]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -28,7 +28,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         })
 
         if (res.ok) {
-          const data = (await res.json()) as { favorites?: Product[] }
+          const data = (await res.json()) as { favorites?: UnifiedProduct[] }
           if (!cancelled) setFavorites(data.favorites ?? [])
           return
         }
@@ -52,7 +52,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("favorites", JSON.stringify(favorites))
   }, [favorites])
 
-  const addFavorite = (product: Product) => {
+  const addFavorite = (product: UnifiedProduct) => {
     void fetch(`/api/favorites/${product.id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -81,7 +81,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     return favorites.some((item) => item.id === productId)
   }
 
-  const toggleFavorite = (product: Product) => {
+  const toggleFavorite = (product: UnifiedProduct) => {
     if (isFavorite(product.id)) {
       removeFavorite(product.id)
     } else {

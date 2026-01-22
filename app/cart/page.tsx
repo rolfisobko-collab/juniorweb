@@ -47,27 +47,32 @@ export default function CartPage() {
             </p>
           </div>
 
-          {items.map((item) => (
-            <Card key={item.id} className="overflow-hidden">
+          {items.map((item, index) => (
+            <Card key={`${item.product.id}-${index}`} className="overflow-hidden">
               <CardContent className="p-4">
                 <div className="flex gap-4">
-                  <Link href={`/products/${item.id}`} className="flex-shrink-0">
+                  <Link href={`/products/${item.product.id}`} className="flex-shrink-0">
                     <div className="relative h-24 w-24 rounded-lg overflow-hidden bg-muted">
-                      <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
+                      <Image 
+                        src={item.product.image || "/placeholder.svg"} 
+                        alt={`${item.product.name} - ${item.product.brand || 'Producto'}`} 
+                        fill 
+                        className="object-cover" 
+                      />
                     </div>
                   </Link>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between gap-4 mb-2">
                       <div>
-                        <Link href={`/products/${item.id}`}>
+                        <Link href={`/products/${item.product.id}`}>
                           <h3 className="font-semibold hover:text-primary transition-colors line-clamp-1">
-                            {item.name}
+                            {item.product.name}
                           </h3>
                         </Link>
-                        <p className="text-sm text-muted-foreground">{item.brand}</p>
+                        <p className="text-sm text-muted-foreground">{item.product.brand}</p>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} className="flex-shrink-0">
+                      <Button variant="ghost" size="icon" onClick={() => removeItem(item.product.id)} className="flex-shrink-0">
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -78,7 +83,7 @@ export default function CartPage() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8 bg-transparent"
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
@@ -87,15 +92,15 @@ export default function CartPage() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8 bg-transparent"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
 
                       <div className="text-right">
-                        <p className="font-bold text-xl">${(item.price * item.quantity).toFixed(2)}</p>
-                        <p className="text-xs text-muted-foreground">${item.price} c/u</p>
+                        <p className="font-bold text-xl">${(item.product.price * item.quantity).toFixed(2)}</p>
+                        <p className="text-xs text-muted-foreground">${item.product.price} c/u</p>
                       </div>
                     </div>
                   </div>

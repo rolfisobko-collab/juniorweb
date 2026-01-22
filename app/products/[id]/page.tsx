@@ -3,36 +3,24 @@
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import type { Product } from "@/lib/products-data"
+import type { UnifiedProduct } from "@/lib/product-types"
 import { Star, Heart, ShoppingCart, Truck, ShieldCheck, ArrowLeft } from "lucide-react"
 import { use, useEffect, useState } from "react"
 import { useCart } from "@/lib/cart-context"
 import { useFavorites } from "@/lib/favorites-context"
 import { useToast } from "@/hooks/use-toast"
+import { ProductCard } from "@/components/product-card"
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const [product, setProduct] = useState<Product | null>(null)
+  const [product, setProduct] = useState<UnifiedProduct | null>(null)
   const [loading, setLoading] = useState(true)
   const [quantity, setQuantity] = useState(1)
+  const [recommendedProducts, setRecommendedProducts] = useState<UnifiedProduct[]>([])
   const { addItem } = useCart()
   const { toggleFavorite, isFavorite } = useFavorites()
   const { toast } = useToast()
-
-  const demoProduct: Product = {
-    id,
-    name: "Producto Demo",
-    category: "electronics",
-    price: 999,
-    image: "/placeholder.svg",
-    description: "Producto hardcodeado para pruebas en /products/[id].",
-    brand: "TechZone",
-    rating: 4.7,
-    reviews: 123,
-    inStock: true,
-    featured: true,
-  }
 
   useEffect(() => {
     let cancelled = false
@@ -42,28 +30,16 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       try {
         const res = await fetch(`/api/products/${id}`, { method: "GET" })
         if (!res.ok) {
-          if (!cancelled) setProduct(demoProduct)
-          return
+          throw new Error("Product not found")
         }
 
-        const apiProduct = (await res.json()) as {
-          id: string
-          name: string
-          categoryKey: string
-          price: number
-          image: string
-          description: string
-          brand: string
-          rating: number
-          reviews: number
-          inStock: boolean
-          featured?: boolean
-        }
+        const data = await res.json()
+        const apiProduct = data.product
 
-        const mapped: Product = {
+        // Convert API product to UnifiedProduct format
+        const unifiedProduct: UnifiedProduct = {
           id: apiProduct.id,
           name: apiProduct.name,
-          category: (apiProduct.categoryKey as Product["category"]) ?? "electronics",
           price: apiProduct.price,
           image: apiProduct.image,
           description: apiProduct.description,
@@ -72,13 +48,45 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           reviews: apiProduct.reviews,
           inStock: apiProduct.inStock,
           featured: apiProduct.featured,
+          categoryKey: apiProduct.categoryKey,
+          category: apiProduct.category,
+          ...(apiProduct.stockQuantity !== undefined && { stockQuantity: apiProduct.stockQuantity }),
+          ...(apiProduct.createdAt && { createdAt: apiProduct.createdAt }),
+          ...(apiProduct.updatedAt && { updatedAt: apiProduct.updatedAt }),
         }
 
-        if (!cancelled) setProduct(mapped)
-      } catch {
-        if (!cancelled) setProduct(demoProduct)
+        if (!cancelled) {
+          setProduct(unifiedProduct)
+
+          // Load recommended products
+          const recommendedRes = await fetch(`/api/products?limit=4&exclude=${id}`, { method: "GET" })
+          if (recommendedRes.ok) {
+            const recommendedData = await recommendedRes.json()
+            const recommendedUnified = recommendedData.products.map((p: any) => ({
+              id: p.id,
+              name: p.name,
+              price: p.price,
+              image: p.image,
+              description: p.description,
+              brand: p.brand,
+              rating: p.rating,
+              reviews: p.reviews,
+              inStock: p.inStock,
+              featured: p.featured,
+              categoryKey: p.categoryKey,
+              category: p.category,
+            }))
+            setRecommendedProducts(recommendedUnified)
+          }
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Failed to load product:", err)
+        }
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
 
@@ -157,25 +165,21 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   }
 
   const handleAddToCart = () => {
-    if (product) {
-      addItem(product, quantity)
-      toast({
-        title: "Agregado al carrito",
-        description: `${quantity}x ${product.name} agregado a tu carrito`,
-      })
-    }
+    addItem(product, quantity)
+    toast({
+      title: "Agregado al carrito",
+      description: `${quantity}x ${product.name} agregado a tu carrito`,
+    })
   }
 
   const handleToggleFavorite = () => {
-    if (product) {
-      toggleFavorite(product)
-      toast({
-        title: isFavorite(product.id) ? "Eliminado de favoritos" : "Agregado a favoritos",
-        description: isFavorite(product.id)
-          ? `${product.name} ha sido eliminado de tus favoritos`
-          : `${product.name} ha sido agregado a tus favoritos`,
-      })
-    }
+    toggleFavorite(product)
+    toast({
+      title: isFavorite(product.id) ? "Eliminado de favoritos" : "Agregado a favoritos",
+      description: isFavorite(product.id)
+        ? `${product.name} ha sido eliminado de tus favoritos`
+        : `${product.name} ha sido agregado a tus favoritos`,
+    })
   }
 
   return (
@@ -256,6 +260,49 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               <span className="text-sm">Garantía premium de 2 años</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Recommended Products Section */}
+      <div className="mt-16 pt-8 border-t">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">También te puede interesar</h2>
+          <p className="text-gray-600">Productos similares que podrían gustarte</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {recommendedProducts.map((recommendedProduct) => (
+            <ProductCard key={recommendedProduct.id} product={recommendedProduct} />
+          ))}
+          {recommendedProducts.length === 0 && (
+            <>
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="group overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 h-full bg-white rounded-2xl">
+                  <div className="relative aspect-[3/4] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
+                    <div className="absolute inset-0 w-full h-full bg-gray-200 animate-pulse"></div>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide font-medium truncate">
+                        Marca
+                      </p>
+                      <h3 className="font-semibold text-sm line-clamp-2 leading-tight group-hover:text-blue-500 transition-colors duration-200 min-h-[2.5rem] text-gray-800">
+                        Cargando recomendados...
+                      </h3>
+                    </div>
+                    <div className="space-y-3 pt-2">
+                      <p className="text-lg font-bold text-gray-900">$XXX</p>
+                      <Button
+                        size="sm"
+                        className="w-full h-9 text-xs bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+                      >
+                        Ver producto
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
         </div>
       </div>
     </div>

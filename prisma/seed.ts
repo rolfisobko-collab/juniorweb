@@ -18,6 +18,13 @@ import { brandingConfig } from "../lib/branding-data"
 import { contactConfig } from "../lib/contact-data"
 import { adminUsers } from "../lib/admin-users-data"
 
+const DEFAULT_EXCHANGE_RATES = [
+  { currency: "USD", rate: 1.0, isActive: true },
+  { currency: "PYG", rate: 7350.0, isActive: true },
+  { currency: "ARS", rate: 890.0, isActive: true },
+  { currency: "BRL", rate: 5.2, isActive: true },
+]
+
 neonConfig.webSocketConstructor = WebSocket
 
 const connectionString = process.env.DATABASE_URL
@@ -318,6 +325,22 @@ async function main() {
         url: sl.url,
         enabled: sl.enabled,
         contactInformationId: contactConfig.id,
+      },
+    })
+  }
+
+  // Seed exchange rates
+  for (const rate of DEFAULT_EXCHANGE_RATES) {
+    await prisma.exchangeRate.upsert({
+      where: { currency: rate.currency },
+      update: {
+        rate: rate.rate,
+        isActive: rate.isActive,
+      },
+      create: {
+        currency: rate.currency,
+        rate: rate.rate,
+        isActive: rate.isActive,
       },
     })
   }

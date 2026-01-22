@@ -21,6 +21,8 @@ import {
   ChevronRight,
   Palette,
   Phone,
+  TrendingUp,
+  Truck,
 } from "lucide-react"
 import { useAdmin } from "@/lib/admin-context"
 import type { Permission } from "@/lib/admin-users-data"
@@ -30,7 +32,10 @@ import { BrandingLogo } from "./branding-logo"
 const menuGroups = [
   {
     label: "General",
-    items: [{ href: "/panel", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard" as Permission }],
+    items: [
+      { href: "/panel", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard" as Permission },
+      { href: "/panel/exchange-rates", label: "Tasas de Cambio", icon: TrendingUp, permission: "dashboard" as Permission },
+    ],
   },
   {
     label: "Catálogo",
@@ -44,6 +49,7 @@ const menuGroups = [
     items: [
       { href: "/panel/orders", label: "Pedidos", icon: ShoppingBag, permission: "orders" as Permission },
       { href: "/panel/carts", label: "Carritos", icon: ShoppingCart, permission: "carts" as Permission },
+      { href: "/panel/envios", label: "Envíos", icon: Truck, permission: "orders" as Permission },
     ],
   },
   {

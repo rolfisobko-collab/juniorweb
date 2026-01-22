@@ -1,3 +1,5 @@
+import bcrypt from "bcryptjs"
+
 export type Permission =
   | "dashboard"
   | "products"
@@ -17,6 +19,7 @@ export interface AdminUser {
   username: string
   name: string
   password: string
+  passwordHash: string
   role: "superadmin" | "admin" | "editor" | "viewer"
   permissions: Permission[]
   active: boolean
@@ -42,6 +45,20 @@ export const AVAILABLE_PERMISSIONS: { value: Permission; label: string; descript
   { value: "admin_users", label: "Usuarios Admin", description: "Gestionar usuarios del panel admin" },
 ]
 
+// Función para hashear contraseñas
+async function hashPassword(password: string): Promise<string> {
+  const salt = await bcrypt.genSalt(10)
+  return bcrypt.hash(password, salt)
+}
+
+// Exportar función para inicializar
+export async function initializePasswordHashes() {
+  for (const user of adminUsers) {
+    user.passwordHash = await hashPassword(user.password)
+  }
+}
+
+// Usuarios con contraseñas hasheadas
 export const adminUsers: AdminUser[] = [
   {
     id: "1",
@@ -66,6 +83,7 @@ export const adminUsers: AdminUser[] = [
     active: true,
     createdAt: "2024-01-01T00:00:00Z",
     lastLogin: "2024-01-15T10:30:00Z",
+    passwordHash: "", // Se llenará dinámicamente
   },
   {
     id: "2",
@@ -87,6 +105,7 @@ export const adminUsers: AdminUser[] = [
     active: true,
     createdAt: "2024-01-05T00:00:00Z",
     lastLogin: "2024-01-14T15:20:00Z",
+    passwordHash: "", // Se llenará dinámicamente
   },
   {
     id: "3",
@@ -98,6 +117,8 @@ export const adminUsers: AdminUser[] = [
     permissions: ["dashboard", "products", "ctas", "carousel", "home_categories"],
     active: true,
     createdAt: "2024-01-10T00:00:00Z",
+    lastLogin: "2024-01-13T09:15:00Z",
+    passwordHash: "", // Se llenará dinámicamente
   },
   {
     id: "4",
@@ -105,9 +126,10 @@ export const adminUsers: AdminUser[] = [
     username: "viewer",
     name: "Visualizador",
     password: "viewer123",
+    passwordHash: "", // Se llenará dinámicamente
     role: "viewer",
     permissions: ["dashboard", "orders", "users", "home_categories"],
     active: true,
-    createdAt: "2024-01-12T00:00:00Z",
+    createdAt: "2024-01-08T00:00:00Z",
   },
 ]

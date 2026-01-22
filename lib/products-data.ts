@@ -9,6 +9,7 @@ export interface Product {
   rating: number
   reviews: number
   inStock: boolean
+  weight?: number // Peso en kg para cálculo de envío
   featured?: boolean
 }
 
@@ -24,6 +25,7 @@ export const products: Product[] = [
     rating: 4.9,
     reviews: 1234,
     inStock: true,
+    weight: 0.22, // 220g
     featured: true,
   },
   {
@@ -37,6 +39,7 @@ export const products: Product[] = [
     rating: 4.8,
     reviews: 987,
     inStock: true,
+    weight: 1.6, // 1.6kg
     featured: true,
   },
   {
@@ -48,8 +51,10 @@ export const products: Product[] = [
     description: "Auriculares premium con cancelación de ruido líder en la industria",
     brand: "Sony",
     rating: 4.7,
-    reviews: 2341,
+    reviews: 892,
     inStock: true,
+    weight: 0.25, // 250g
+    featured: true,
   },
   {
     id: "4",
@@ -62,6 +67,7 @@ export const products: Product[] = [
     rating: 4.9,
     reviews: 543,
     inStock: true,
+    weight: 18.5, // 18.5kg
     featured: true,
   },
   {

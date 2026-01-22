@@ -1,19 +1,22 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import type { Product } from "./products-data"
+import type { UnifiedProduct } from "./product-types"
+import type { Currency } from "./currency-context"
 
-interface CartItem extends Product {
+interface CartItem {
+  product: UnifiedProduct
   quantity: number
 }
 
 interface CartContextType {
   items: CartItem[]
-  addItem: (product: Product, quantity?: number) => void
+  addItem: (product: UnifiedProduct, quantity?: number) => void
   removeItem: (productId: string) => void
   updateQuantity: (productId: string, quantity: number) => void
   clearCart: () => void
   total: number
+  totalInUSD: number
   itemCount: number
 }
 
@@ -58,7 +61,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("cart", JSON.stringify(items))
   }, [items])
 
-  const addItem = (product: Product, quantity = 1) => {
+  const addItem = (product: UnifiedProduct, quantity = 1) => {
     void fetch("/api/cart/items", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -67,15 +70,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     })
 
     setItems((currentItems) => {
-      const existingItem = currentItems.find((item) => item.id === product.id)
+      const existingItem = currentItems.find((item) => item.product.id === product.id)
 
       if (existingItem) {
         return currentItems.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item,
+          item.product.id === product.id ? { ...item, quantity: item.quantity + quantity } : item,
         )
       }
 
-      return [...currentItems, { ...product, quantity }]
+      return [...currentItems, { product, quantity }]
     })
   }
 
@@ -86,7 +89,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       credentials: "include",
     })
 
-    setItems((currentItems) => currentItems.filter((item) => item.id !== productId))
+    setItems((currentItems) => currentItems.filter((item) => item.product.id !== productId))
   }
 
   const updateQuantity = (productId: string, quantity: number) => {
@@ -102,12 +105,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ quantity }),
     })
 
-    setItems((currentItems) => currentItems.map((item) => (item.id === productId ? { ...item, quantity } : item)))
+    setItems((currentItems) => currentItems.map((item) => (item.product.id === productId ? { ...item, quantity } : item)))
   }
 
   const clearCart = () => {
     for (const item of items) {
-      void fetch(`/api/cart/items/${item.id}`, {
+      void fetch(`/api/cart/items/${item.product.id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -116,11 +119,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems([])
   }
 
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
+  const totalInUSD = total // Keep USD total for backend calculations
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, total, itemCount }}>
+    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, total, totalInUSD, itemCount }}>
       {children}
     </CartContext.Provider>
   )

@@ -15,13 +15,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ShoppingCart, Heart, User, Search, Menu, ChevronDown, ArrowRight, Grid3x3 } from "lucide-react"
+import { ShoppingCart, Heart, User, Search, Menu, ChevronDown, ArrowRight, Grid3x3, X, Home, Package, Tag, HelpCircle, Phone } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useCart } from "@/lib/cart-context"
 import { useFavorites } from "@/lib/favorites-context"
+import { CurrencySelector } from "./currency-selector"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { categories } from "@/lib/categories-data"
 import { BrandingLogo } from "./branding-logo"
+import { colors } from "@/lib/colors"
 
 export function Header() {
   const { user, logout } = useAuth()
@@ -29,12 +31,14 @@ export function Header() {
   const { favorites } = useFavorites()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
       setSearchQuery("")
+      setSidebarOpen(false)
     }
   }
 
@@ -42,256 +46,257 @@ export function Header() {
   const hasMoreCategories = categories.length > 3
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-gradient-to-r from-background via-background to-primary/5 backdrop-blur-xl supports-[backdrop-filter]:bg-background/95 shadow-lg">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between gap-4">
-          <BrandingLogo href="/" variant="header" className="shrink-0" />
-
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 items-center justify-center max-w-2xl mx-4">
-            <div className="relative w-full">
-              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Buscar productos, marcas o categorías..."
-                className="pl-12 pr-32 h-12 w-full border-2 border-border focus:border-primary/50 rounded-full shadow-md hover:shadow-lg transition-shadow bg-background/50"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+    <>
+      <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white backdrop-blur-xl supports-[backdrop-filter]:bg-white/95 shadow-lg">
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
               <Button
-                type="submit"
-                size="sm"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full h-8 px-5 shadow-md"
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(true)}
+                className="hover:bg-blue-50 hover:scale-110 transition-all"
               >
-                Buscar
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Abrir menú</span>
               </Button>
+              <BrandingLogo href="/" variant="header" className="shrink-0" />
             </div>
-          </form>
 
-          <div className="flex items-center gap-1 shrink-0">
-            <Link href="/favorites">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative hover:bg-primary/10 hover:scale-110 transition-all"
-              >
-                <Heart className="h-5 w-5" />
-                {favorites.length > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-br from-red-500 to-pink-600 text-white text-xs flex items-center justify-center font-bold shadow-lg animate-pulse">
-                    {favorites.length}
-                  </span>
-                )}
-                <span className="sr-only">Favoritos</span>
-              </Button>
-            </Link>
-
-            <Link href="/cart">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative hover:bg-primary/10 hover:scale-110 transition-all"
-              >
-                <ShoppingCart className="h-5 w-5" />
-                {itemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-br from-primary to-blue-600 text-primary-foreground text-xs flex items-center justify-center font-bold shadow-lg animate-pulse">
-                    {itemCount}
-                  </span>
-                )}
-                <span className="sr-only">Carrito</span>
-              </Button>
-            </Link>
-
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:scale-110 transition-all">
-                    <User className="h-5 w-5" />
-                    <span className="sr-only">Menú de usuario</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">{user.name}</p>
-                      <p className="text-xs text-muted-foreground">{user.email}</p>
+            <form onSubmit={handleSearch} className="hidden md:flex flex-1 items-center justify-center max-w-2xl mx-4">
+              <div className="relative w-full group">
+                {/* Contenedor principal */}
+                <div className="relative">
+                  {/* Barra de búsqueda elegante */}
+                  <div className="flex items-center bg-white border-2 border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 focus-within:border-blue-500 focus-within:shadow-xl">
+                    {/* Icono de búsqueda */}
+                    <div className="pl-4 pr-3">
+                      <Search className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" />
                     </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile">Mi Perfil</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/orders">Mis Pedidos</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/favorites">Favoritos</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="text-destructive">
-                    Cerrar Sesión
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Link href="/login">
-                <Button variant="default" size="sm" className="hidden sm:flex shadow-lg hover:shadow-xl transition-all">
-                  Iniciar Sesión
-                </Button>
-                <Button variant="ghost" size="icon" className="sm:hidden hover:bg-primary/10">
-                  <User className="h-5 w-5" />
-                </Button>
-              </Link>
-            )}
-
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden hover:bg-primary/10">
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Menú</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-                <nav className="flex flex-col gap-4 mt-6">
-                  <form onSubmit={handleSearch} className="relative mb-4">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    
+                    {/* Input profesional */}
                     <Input
-                      placeholder="Buscar productos..."
-                      className="pl-10"
+                      type="text"
+                      placeholder="Buscar productos, marcas o categorías..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
+                      className="flex-1 py-3 px-2 bg-transparent border-0 text-gray-800 placeholder:text-gray-500 text-sm font-medium focus:outline-none focus:ring-0"
                     />
-                  </form>
+                    
+                    {/* Botón de búsqueda profesional */}
+                    <Button
+                      type="submit"
+                      className="mr-2 px-5 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md text-sm"
+                    >
+                      Buscar
+                    </Button>
+                  </div>
+                  
+                  {/* Indicador sutil de estado */}
+                  <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-blue-600 scale-x-0 group-focus-within:scale-x-100 transition-transform duration-300 rounded-full"></div>
+                </div>
+              </div>
+            </form>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <CurrencySelector />
+              
+              <Link href="/favorites">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative hover:bg-blue-50 hover:scale-110 transition-all"
+                >
+                  <Heart className="h-5 w-5" />
+                  {favorites.length > 0 && (
+                    <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-br from-red-500 to-pink-600 text-white text-xs flex items-center justify-center font-bold shadow-lg animate-pulse">
+                      {favorites.length}
+                    </span>
+                  )}
+                  <span className="sr-only">Favoritos</span>
+                </Button>
+              </Link>
+
+              <Link href="/cart">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative hover:bg-blue-50 hover:scale-110 transition-all"
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  {itemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs flex items-center justify-center font-bold shadow-lg animate-pulse">
+                      {itemCount}
+                    </span>
+                  )}
+                  <span className="sr-only">Carrito</span>
+                </Button>
+              </Link>
+
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="hover:bg-blue-50 hover:scale-110 transition-all">
+                      <User className="h-5 w-5" />
+                      <span className="sr-only">Menú de usuario</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">{user.name}</p>
+                        <p className="text-xs text-gray-500">{user.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile">Mi Perfil</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/orders">Mis Pedidos</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/favorites">Favoritos</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={logout} className="text-red-600">
+                      Cerrar Sesión
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link href="/login">
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="hidden sm:flex bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 border border-blue-500/20 font-semibold"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Iniciar Sesión
+                  </Button>
+                  <Button variant="ghost" size="icon" className="sm:hidden hover:bg-blue-50">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </Link>
+              )}
+
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="md:hidden hover:bg-blue-50">
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Menú</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                  <nav className="flex flex-col gap-4 mt-6">
+                    <form onSubmit={handleSearch} className="relative mb-4">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                      <Input
+                        placeholder="Buscar productos..."
+                        className="pl-10"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </form>
+                    {categories.map((category) => (
+                      <div key={category.slug} className="space-y-2">
+                        <Link
+                          href={`/products?category=${category.slug}`}
+                          className="text-base font-semibold hover:text-blue-500 transition-colors flex items-center gap-2"
+                        >
+                          {category.name}
+                          <span className="text-xs text-gray-500">({category.subcategories.length})</span>
+                        </Link>
+                        <div className="pl-4 space-y-2">
+                          {category.subcategories.map((sub) => (
+                            <Link
+                              key={sub.slug}
+                              href={`/products?category=${category.slug}&subcategory=${sub.slug}`}
+                              className="block text-sm text-gray-500 hover:text-blue-500 transition-colors"
+                            >
+                              {sub.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Sidebar Desplegable */}
+      <div 
+        className={`fixed inset-0 z-50 ${sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'} transition-all duration-300 ease-in-out`}
+      >
+        {/* Overlay */}
+        <div 
+          className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0'}`}
+          onClick={() => setSidebarOpen(false)}
+        />
+        
+        {/* Sidebar */}
+        <div 
+          className={`fixed left-0 top-0 h-full w-80 bg-white border-r border-gray-200 shadow-2xl transition-transform duration-300 ease-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        >
+          <div className="flex flex-col h-full">
+            {/* Header del Sidebar */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <BrandingLogo href="/" variant="header" className="shrink-0" />
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(false)}
+                className="hover:bg-blue-50 transition-colors"
+              >
+                <X className="h-5 w-5" />
+                <span className="sr-only">Cerrar menú</span>
+              </Button>
+            </div>
+
+            {/* Contenido del Sidebar */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {/* Categorías */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-600 mb-4 px-2">CATEGORÍAS</h3>
+                <div className="space-y-3">
                   {categories.map((category) => (
                     <div key={category.slug} className="space-y-2">
                       <Link
                         href={`/products?category=${category.slug}`}
-                        className="text-base font-semibold hover:text-primary transition-colors flex items-center gap-2"
+                        onClick={() => setSidebarOpen(false)}
+                        className="flex items-center justify-between px-3 py-3 rounded-lg hover:bg-blue-50 transition-all duration-200 group"
                       >
-                        {category.name}
-                        <span className="text-xs text-muted-foreground">({category.subcategories.length})</span>
+                        <span className="font-medium group-hover:text-blue-500 transition-colors">{category.name}</span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                          {category.subcategories.length}
+                        </span>
                       </Link>
-                      <div className="pl-4 space-y-2">
+                      <div className="pl-6 space-y-1">
                         {category.subcategories.map((sub) => (
                           <Link
                             key={sub.slug}
                             href={`/products?category=${category.slug}&subcategory=${sub.slug}`}
-                            className="block text-sm text-muted-foreground hover:text-primary transition-colors"
+                            onClick={() => setSidebarOpen(false)}
+                            className="block text-sm text-gray-500 hover:text-blue-500 transition-all duration-200 py-2 px-3 rounded-md hover:bg-blue-50"
                           >
-                            {sub.name}
+                            • {sub.name}
                           </Link>
                         ))}
                       </div>
                     </div>
                   ))}
-                </nav>
-              </SheetContent>
-            </Sheet>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-
-        <div className="hidden md:block border-t border-border/40 bg-gradient-to-r from-transparent via-primary/5 to-transparent">
-          <nav className="flex items-center justify-center h-12 gap-1">
-            {visibleCategories.map((category) => (
-              <DropdownMenu key={category.slug}>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-full rounded-none text-sm font-semibold hover:text-primary hover:bg-primary/5 transition-all px-4"
-                  >
-                    {category.name}
-                    <ChevronDown className="ml-1 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="start"
-                  className="w-[420px] max-h-[500px] overflow-y-auto p-4"
-                  sideOffset={4}
-                >
-                  <div className="mb-3">
-                    <Link
-                      href={`/products?category=${category.slug}`}
-                      className="text-base font-bold hover:text-primary transition-colors flex items-center gap-2 mb-4 pb-3 border-b"
-                    >
-                      Ver todo en {category.name}
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {category.subcategories.map((sub) => (
-                      <Link
-                        key={sub.slug}
-                        href={`/products?category=${category.slug}&subcategory=${sub.slug}`}
-                        className="text-sm hover:text-primary transition-all py-2 px-3 rounded-lg hover:bg-primary/5 hover:translate-x-1 duration-200"
-                      >
-                        {sub.name}
-                      </Link>
-                    ))}
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ))}
-
-            {hasMoreCategories && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-full rounded-none text-sm font-semibold hover:text-primary hover:bg-primary/5 transition-all px-4"
-                  >
-                    <Grid3x3 className="mr-1 h-4 w-4" />
-                    Todas las Categorías
-                    <ChevronDown className="ml-1 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="center"
-                  className="w-[600px] max-h-[600px] overflow-y-auto p-6"
-                  sideOffset={4}
-                >
-                  <div className="mb-4">
-                    <h3 className="text-lg font-bold mb-2">Todas las Categorías</h3>
-                    <p className="text-sm text-muted-foreground">Explora nuestra selección completa</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-6">
-                    {categories.map((category) => (
-                      <div key={category.slug} className="space-y-2">
-                        <Link
-                          href={`/products?category=${category.slug}`}
-                          className="text-base font-bold hover:text-primary transition-colors flex items-center gap-2 mb-2"
-                        >
-                          {category.name}
-                          <span className="text-xs font-normal text-muted-foreground">
-                            ({category.subcategories.length})
-                          </span>
-                        </Link>
-                        <div className="space-y-1 pl-3 border-l-2 border-border">
-                          {category.subcategories.slice(0, 5).map((sub) => (
-                            <Link
-                              key={sub.slug}
-                              href={`/products?category=${category.slug}&subcategory=${sub.slug}`}
-                              className="block text-sm text-muted-foreground hover:text-primary transition-colors py-1"
-                            >
-                              {sub.name}
-                            </Link>
-                          ))}
-                          {category.subcategories.length > 5 && (
-                            <Link
-                              href={`/products?category=${category.slug}`}
-                              className="block text-sm text-primary hover:underline py-1 font-medium"
-                            >
-                              Ver todas ({category.subcategories.length})
-                            </Link>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </nav>
-        </div>
       </div>
-    </header>
+    </>
   )
 }

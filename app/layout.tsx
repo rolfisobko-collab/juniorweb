@@ -20,5 +20,12 @@ export default function RootLayout({
 }
 
 export const metadata = {
-      generator: 'v0.app'
-    };
+  title: 'TechZone - Tu Tienda de Tecnología',
+  description: 'Descubre los mejores productos tecnológicos en TechZone. Laptops, smartphones, gadgets y más con las mejores marcas.',
+  icons: {
+    icon: 'https://i.ibb.co/dF0YLJw/Tech-Zone-store-11.png',
+    shortcut: 'https://i.ibb.co/dF0YLJw/Tech-Zone-store-11.png',
+    apple: 'https://i.ibb.co/dF0YLJw/Tech-Zone-store-11.png',
+  },
+  generator: 'v0.app'
+};

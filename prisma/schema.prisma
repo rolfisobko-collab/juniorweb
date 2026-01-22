@@ -25,6 +25,7 @@ model Product {
   inStock     Boolean
   stockQuantity Int     @default(0)
   featured    Boolean  @default(false)
+  weight      Float?   @default(0.5) // Peso en kg para cálculo de envío
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -318,4 +319,13 @@ model SocialLink {
   contactInformation ContactInformation @relation(fields: [contactInformationId], references: [id])
 
   @@index([contactInformationId])
+}
+
+model ExchangeRate {
+  id          String   @id @default(cuid())
+  currency    String   // USD, PYG, ARS, BRL
+  rate        Float    // Rate relative to USD
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
 }
