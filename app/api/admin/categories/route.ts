@@ -15,6 +15,7 @@ export async function GET() {
 
     return NextResponse.json({ categories })
   } catch (_error) {
+    console.error("Error loading categories:", _error)
     return NextResponse.json({ error: "Failed to load categories" }, { status: 500 })
   }
 }
@@ -46,6 +47,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ category: created })
   } catch (_error) {
+    console.error("Error creating category:", _error)
     return NextResponse.json({ error: "Failed to create category" }, { status: 500 })
   }
 }

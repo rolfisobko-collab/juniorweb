@@ -2,12 +2,18 @@ import { PrismaNeon } from "@prisma/adapter-neon"
 import { neonConfig } from "@neondatabase/serverless"
 import { PrismaClient } from "@prisma/client"
 import WebSocket from "ws"
+import { config } from "dotenv"
+
+// Cargar .env.local explícitamente
+config({ path: ".env.local" })
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
 
 neonConfig.webSocketConstructor = WebSocket
 
 const DATABASE_URL = process.env.DATABASE_URL
+
+console.log("DATABASE_URL:", DATABASE_URL ? "SET" : "NOT SET")
 
 let prisma: PrismaClient
 

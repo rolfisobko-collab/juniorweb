@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Mail, ArrowLeft } from "lucide-react"
+import { useAuth } from "@/lib/auth-context"
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("")
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const { resetPassword } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,11 +27,14 @@ export default function ResetPasswordPage() {
       return
     }
 
-    // Simulate password reset
-    setTimeout(() => {
+    try {
+      await resetPassword(email)
       setSubmitted(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al enviar email de recuperación")
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   if (submitted) {
@@ -42,9 +47,11 @@ export default function ResetPasswordPage() {
           <div className="relative z-10 max-w-md flex flex-col items-center">
             <Link href="/" className="mb-8">
               <img 
-                src="https://i.ibb.co/3ysKSJRT/Tech-Zone-store-10.png" 
+                src="/logo-optimized.png" 
                 alt="TechZone" 
                 className="h-32 w-auto object-contain drop-shadow-2xl"
+                width="400"
+                height="136"
               />
             </Link>
           </div>
@@ -56,9 +63,11 @@ export default function ResetPasswordPage() {
             {/* Mobile Logo */}
             <Link href="/" className="md:hidden flex items-center justify-center mb-8">
               <img 
-                src="https://i.ibb.co/3ysKSJRT/Tech-Zone-store-10.png" 
+                src="/logo-optimized.png" 
                 alt="TechZone" 
                 className="h-12 w-auto object-contain"
+                width="150"
+                height="51"
               />
             </Link>
 
@@ -92,9 +101,11 @@ export default function ResetPasswordPage() {
         <div className="relative z-10 max-w-md flex flex-col items-center">
           <Link href="/" className="mb-8">
             <img 
-              src="https://i.ibb.co/3ysKSJRT/Tech-Zone-store-10.png" 
+              src="/logo-optimized.png" 
               alt="TechZone" 
               className="h-32 w-auto object-contain drop-shadow-2xl"
+              width="400"
+              height="136"
             />
           </Link>
         </div>
@@ -106,9 +117,11 @@ export default function ResetPasswordPage() {
           {/* Mobile Logo */}
           <Link href="/" className="md:hidden flex items-center justify-center mb-8">
             <img 
-              src="https://i.ibb.co/3ysKSJRT/Tech-Zone-store-10.png" 
+              src="/logo-optimized.png" 
               alt="TechZone" 
               className="h-12 w-auto object-contain"
+              width="150"
+              height="51"
             />
           </Link>
 

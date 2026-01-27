@@ -1,6 +1,5 @@
 import { SignJWT, jwtVerify } from "jose"
 import bcrypt from "bcryptjs"
-import crypto from "crypto"
 
 function getJwtSecret() {
   const secret = process.env.JWT_SECRET
@@ -18,7 +17,9 @@ export async function verifyPassword(password: string, hash: string) {
 }
 
 export function generateRefreshToken() {
-  return crypto.randomBytes(48).toString("base64url")
+  const array = new Uint8Array(48)
+  crypto.getRandomValues(array)
+  return btoa(String.fromCharCode(...array))
 }
 
 export function hashToken(token: string) {

@@ -4,7 +4,7 @@ import ProductsContent from "./products-content"
 export default function ProductsPage({
   searchParams,
 }: {
-  searchParams?: { category?: string; sort?: string }
+  searchParams?: Promise<{ category?: string; subcategory?: string; sort?: string }>
 }) {
   return (
     <Suspense fallback={null}>

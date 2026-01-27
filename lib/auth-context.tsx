@@ -45,31 +45,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const load = async () => {
       try {
         if (isAuthDisabled()) {
+          // Demo mode - usar localStorage
           const stored = localStorage.getItem(DEMO_USER_STORAGE_KEY)
           if (!stored) {
             if (!cancelled) setUser(null)
-            return
+          } else {
+            try {
+              const parsedUser = JSON.parse(stored)
+              if (!cancelled) setUser(parsedUser)
+            } catch {
+              if (!cancelled) setUser(null)
+            }
           }
-          const parsed = JSON.parse(stored) as User
-          if (!cancelled) setUser(parsed)
-          return
+        } else {
+          // Real Firebase - escuchar cambios de auth
+          const { onAuthStateChanged } = await import("@/lib/firebase")
+          const unsubscribe = onAuthStateChanged((firebaseUser) => {
+            if (!cancelled) {
+              if (firebaseUser) {
+                const user = {
+                  id: firebaseUser.uid,
+                  email: firebaseUser.email || "",
+                  name: firebaseUser.displayName || "",
+                  avatar: firebaseUser.photoURL || undefined
+                }
+                setUser(user)
+              } else {
+                setUser(null)
+              }
+              setIsLoading(false)
+            }
+          })
+
+          return () => {
+            unsubscribe()
+          }
         }
-
-        const res = await fetch("/api/auth/me", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        })
-
-        if (!res.ok) {
-          if (!cancelled) setUser(null)
-          return
-        }
-
-        const data = (await res.json()) as { user?: User }
-        if (!cancelled) setUser(data.user ?? null)
+      } catch (error) {
+        console.error("Auth loading error:", error)
+        if (!cancelled) setUser(null)
       } finally {
-        if (!cancelled) setIsLoading(false)
+        if (isAuthDisabled() && !cancelled) {
+          setIsLoading(false)
+        }
       }
     }
 
@@ -93,30 +111,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      })
-
-      if (!res.ok) {
-        throw new Error("Credenciales inválidas")
+      // Usar sistema de autenticación DIRECTAMENTE - sin API
+      const { loginWithEmail } = await import("@/lib/firebase-auth-email")
+      const result = await loginWithEmail(email, password)
+      
+      if (!result.success) {
+        throw new Error(result.error)
+      }
+      
+      if (result.user) {
+        setUser(result.user)
+      }
+      
+      // Si necesita verificación, lanzar error especial
+      if (result.needsVerification) {
+        throw new Error(`VERIFY_NEEDED:${result.user.email}`)
       }
 
-      const data = (await res.json()) as { user?: User }
-      setUser(data.user ?? null)
     } finally {
       setIsLoading(false)
     }
   }
 
   const loginWithGoogle = async () => {
-    throw new Error("OAuth no implementado")
+    try {
+      if (isAuthDisabled()) {
+        // Demo mode - create mock Google user
+        const mockUser = {
+          id: "google-demo-user",
+          email: "demo@gmail.com",
+          name: "Demo Google User",
+          avatar: "https://lh3.googleusercontent.com/a/default-user"
+        }
+        setUser(mockUser)
+        localStorage.setItem(DEMO_USER_STORAGE_KEY, JSON.stringify(mockUser))
+        return
+      }
+
+      // Real Firebase Google login
+      const { signInWithGoogle } = await import("@/lib/firebase")
+      const firebaseUser = await signInWithGoogle()
+      
+      const user = {
+        id: firebaseUser.uid,
+        email: firebaseUser.email || "",
+        name: firebaseUser.displayName || "",
+        avatar: firebaseUser.photoURL || undefined
+      }
+      
+      setUser(user)
+      localStorage.setItem(DEMO_USER_STORAGE_KEY, JSON.stringify(user))
+    } catch (error) {
+      console.error("Google login error:", error)
+      throw error
+    }
   }
 
   const loginWithFacebook = async () => {
-    throw new Error("OAuth no implementado")
+    // Facebook removed - throw error
+    throw new Error("Facebook login is not available")
   }
 
   const register = async (email: string, password: string, name: string) => {
@@ -133,35 +186,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password, name }),
-      })
-
-      if (!res.ok) {
-        throw new Error("No se pudo registrar")
+      // Usar sistema de autenticación DIRECTAMENTE - sin API
+      const { registerWithEmail } = await import("@/lib/firebase-auth-email")
+      const result = await registerWithEmail(email, password, name)
+      
+      if (!result.success) {
+        throw new Error(result.error)
       }
+      
+      if (result.user) {
+        setUser(result.user)
+      }
+      
+      // Firebase envía email automático - mostrar mensaje
+      throw new Error("VERIFY_NEEDED:Revisa tu email para verificar tu cuenta. Firebase envió el link automáticamente.")
 
-      const data = (await res.json()) as { user?: User }
-      setUser(data.user ?? null)
+    } catch (error) {
+      console.error("Register error:", error)
+      throw error
     } finally {
       setIsLoading(false)
     }
   }
 
-  const logout = () => {
-    setUser(null)
+  const logout = async () => {
+    try {
+      if (isAuthDisabled()) {
+        // Demo mode - limpiar localStorage
+        localStorage.removeItem(DEMO_USER_STORAGE_KEY)
+        setUser(null)
+        return
+      }
 
-    if (isAuthDisabled()) {
-      localStorage.removeItem(DEMO_USER_STORAGE_KEY)
-    } else {
-    void fetch("/api/auth/logout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    })
+      // Real Firebase logout
+      const { firebaseSignOut } = await import("@/lib/firebase")
+      await firebaseSignOut()
+      setUser(null)
+    } catch (error) {
+      console.error("Logout error:", error)
+      // Forzar logout aunque haya error
+      setUser(null)
     }
 
     localStorage.removeItem("cart")
@@ -169,12 +233,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const resetPassword = async (email: string) => {
-    await fetch("/api/auth/forgot-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ email }),
-    })
+    try {
+      if (isAuthDisabled()) {
+        // Demo mode - mock success
+        return
+      }
+
+      // Usar Firebase para reset de password
+      const { resetPassword } = await import("@/lib/firebase-auth-email")
+      const result = await resetPassword(email)
+      
+      if (!result.success) {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      console.error("Reset password error:", error)
+      throw error
+    }
   }
 
   return (

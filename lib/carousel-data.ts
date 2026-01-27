@@ -16,13 +16,13 @@ export interface CarouselSlide {
 export const carouselSlides: CarouselSlide[] = [
   {
     id: 1,
-    title: "iPhone 15 Pro Max",
+    title: "iPhone 17 Pro Max",
     subtitle: "Titanio. Tan fuerte. Tan ligero. Tan Pro.",
-    description: "El smartphone más avanzado con chip A17 Pro y sistema de cámara revolucionario",
+    description: "El smartphone más avanzado con chip A19 Pro y sistema de cámara revolucionario",
     buttonText: "Comprar Ahora",
     buttonLink: "/products/1",
-    image: "/iphone-15-pro-max-luxury-showcase.jpg",
-    imageMobile: "/iphone-15-pro-max-mobile-banner.jpg",
+    image: "https://i.ebayimg.com/images/g/zcgAAeSw~d5owejX/s-l1200.jpg",
+    imageMobile: "https://i.ebayimg.com/images/g/zcgAAeSw~d5owejX/s-l800.jpg",
     backgroundColor: "#1a1a1a",
     textColor: "#ffffff",
     position: 1,

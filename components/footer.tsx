@@ -4,9 +4,11 @@ import Link from "next/link"
 import { Facebook, Instagram, Twitter, Linkedin, Youtube, Mail, Phone, MapPin } from "lucide-react"
 import { useEffect, useState } from "react"
 import { getContactConfig, type ContactConfig } from "@/lib/contact-data"
-import { BrandingLogo } from "./branding-logo"
+import { BrandingLogo } from "@/components/branding-logo"
+import { useTranslation } from "@/lib/i18n/translation-provider"
 
 export default function Footer() {
+  const { t } = useTranslation()
   const [contact, setContact] = useState<ContactConfig>(getContactConfig())
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export default function Footer() {
           {/* Company Info */}
           <div className="space-y-4">
             <BrandingLogo href="/" variant="footer" />
-            <p className="text-sm text-muted-foreground text-pretty">{contact.description}</p>
+            <p className="text-sm text-muted-foreground text-pretty">{t('Your premium destination for cutting-edge technology, smart appliances and exclusive fragrances from the most prestigious brands in the world')}</p>
             {/* Social Media */}
             <div className="flex gap-3 pt-2">
               {contact.socialLinks
@@ -72,11 +74,11 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-lg">Explorar</h4>
+            <h4 className="font-semibold text-lg">{t('Explore')}</h4>
             <ul className="space-y-2.5">
               <li>
                 <Link href="/products" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Todos los Productos
+                  {t('All Products')}
                 </Link>
               </li>
               <li>
@@ -84,7 +86,7 @@ export default function Footer() {
                   href="/products?category=electronics"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Electrónica
+                  {t('Electronics')}
                 </Link>
               </li>
               <li>
@@ -92,7 +94,7 @@ export default function Footer() {
                   href="/products?category=appliances"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Electrodomésticos
+                  {t('Appliances')}
                 </Link>
               </li>
               <li>
@@ -100,17 +102,17 @@ export default function Footer() {
                   href="/products?category=perfumes"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Perfumes
+                  {t('Perfumes')}
                 </Link>
               </li>
               <li>
                 <Link href="/favorites" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Mis Favoritos
+                  {t('My Favorites')}
                 </Link>
               </li>
               <li>
                 <Link href="/orders" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Mis Pedidos
+                  {t('My Orders')}
                 </Link>
               </li>
             </ul>
@@ -118,48 +120,46 @@ export default function Footer() {
 
           {/* Legal */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-lg">Legal</h4>
+            <h4 className="font-semibold text-lg">{t('Legal')}</h4>
             <ul className="space-y-2.5">
               <li>
                 <Link
-                  href="/terms-and-conditions"
+                  href="/legal#terminos"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Términos y Condiciones
+                  {t('Terms and Conditions Link')}
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/privacy-policy"
+                  href="/legal#privacidad"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Política de Privacidad
+                  {t('Privacy Policy Link')}
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/shipping-policy"
+                  href="/legal#envios"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Política de Envíos
+                  {t('Shipping and Warranty')}
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/return-policy"
+                  href="/legal#devoluciones"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Devoluciones y Cambios
+                  {t('Returns Link')}
                 </Link>
               </li>
               <li>
-                <Link href="/warranty" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Garantía
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Preguntas Frecuentes
+                <Link
+                  href="/legal#faq"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {t('FAQ Link')}
                 </Link>
               </li>
             </ul>
@@ -167,12 +167,12 @@ export default function Footer() {
 
           {/* Contact */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-lg">Contacto</h4>
+            <h4 className="font-semibold text-lg">{t('Footer Contact')}</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium">Dirección</p>
+                  <p className="text-sm font-medium">{t('Footer Address')}</p>
                   <p className="text-sm text-muted-foreground">
                     {contact.address}
                     <br />
@@ -183,7 +183,7 @@ export default function Footer() {
               <li className="flex items-start gap-3">
                 <Phone className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium">Teléfono</p>
+                  <p className="text-sm font-medium">{t('Footer Phone')}</p>
                   <a
                     href={`tel:${contact.phone.replace(/\s/g, "")}`}
                     className="text-sm text-muted-foreground hover:text-primary"
@@ -195,7 +195,7 @@ export default function Footer() {
               <li className="flex items-start gap-3">
                 <Mail className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium">Email</p>
+                  <p className="text-sm font-medium">{t('Footer Email')}</p>
                   <a href={`mailto:${contact.email}`} className="text-sm text-muted-foreground hover:text-primary">
                     {contact.email}
                   </a>
@@ -203,9 +203,9 @@ export default function Footer() {
               </li>
             </ul>
             <div className="pt-2">
-              <p className="text-xs text-muted-foreground">Horario de atención:</p>
-              <p className="text-sm font-medium">{contact.workingHours.weekdays}</p>
-              <p className="text-sm font-medium">{contact.workingHours.saturday}</p>
+              <p className="text-xs text-muted-foreground">{t('Attention Hours')}</p>
+              <p className="text-sm font-medium">{t('Monday to Friday: 9:00 - 18:00')}</p>
+              <p className="text-sm font-medium">{t('Saturday: 10:00 - 14:00')}</p>
             </div>
           </div>
         </div>
@@ -214,7 +214,7 @@ export default function Footer() {
         <div className="border-t border-border/50 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground text-center md:text-left">
-              © 2026 TechZone. Todos los derechos reservados.
+              {t('© 2026 TechZone. All rights reserved')}
             </p>
           </div>
         </div>

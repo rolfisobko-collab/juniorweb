@@ -6,13 +6,23 @@ import { requireAdminId } from "@/lib/admin-session"
 
 export async function GET(req: Request) {
   try {
+    console.log('🔍 GET /api/admin/products - Starting request')
+    
     const adminId = await requireAdminId()
-    if (!adminId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    console.log('👤 Admin ID:', adminId)
+    
+    if (!adminId) {
+      console.log('❌ Unauthorized - No admin ID')
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
 
     const { searchParams } = new URL(req.url)
     const search = (searchParams.get("search") ?? "").trim()
     const categoryKey = (searchParams.get("category") ?? "").trim()
+    
+    console.log('🔍 Search params:', { search, categoryKey })
 
+    console.log('📊 Querying products...')
     const products = await prisma.product.findMany({
       where: {
         ...(categoryKey ? { categoryKey } : {}),
@@ -28,17 +38,40 @@ export async function GET(req: Request) {
       },
       orderBy: { updatedAt: "desc" },
       take: 500,
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        brand: true,
+        categoryKey: true,
+        description: true,
+        image: true,
+        rating: true,
+        reviews: true,
+        inStock: true,
+        updatedAt: true,
+      }
     })
+    
+    console.log('✅ Found products:', products.length)
 
     return NextResponse.json({ products })
-  } catch (_error) {
-    return NextResponse.json({ error: "Failed to load products" }, { status: 500 })
+  } catch (error) {
+    console.error('❌ Error in GET /api/admin/products:', error)
+    return NextResponse.json({ 
+      error: "Failed to load products",
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
 
 export async function POST(req: Request) {
   try {
+    console.log('🔍 POST /api/admin/products - Starting request')
+    
     const adminId = await requireAdminId()
+    console.log('👤 Admin ID:', adminId)
+    
     if (!adminId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
     const body = (await req.json()) as {
@@ -53,29 +86,52 @@ export async function POST(req: Request) {
       featured?: boolean
     }
 
+    console.log('📦 Product data received:', body)
+
     if (!body.name || !body.brand || !body.description || typeof body.price !== "number" || !body.categoryKey || !body.image) {
+      console.log('❌ Missing fields validation failed:', {
+        name: !!body.name,
+        brand: !!body.brand,
+        description: !!body.description,
+        price: typeof body.price === "number",
+        categoryKey: !!body.categoryKey,
+        image: !!body.image
+      })
       return NextResponse.json({ error: "Missing fields" }, { status: 400 })
     }
 
+    console.log('💾 Creating product in database...')
+    // Crear el objeto sin incluir el campo weight
+    const productDataWithoutWeight = {
+      id: crypto.randomUUID(),
+      name: body.name,
+      brand: body.brand,
+      description: body.description,
+      price: body.price,
+      categoryKey: body.categoryKey,
+      image: body.image,
+      rating: 0,
+      reviews: 0,
+      inStock: body.inStock ?? (body.stockQuantity ?? 0) > 0,
+      stockQuantity: body.stockQuantity ?? (body.inStock ? 50 : 0),
+      featured: body.featured ?? false,
+    }
+    
     const created = await prisma.product.create({
-      data: {
-        id: crypto.randomUUID(),
-        name: body.name,
-        brand: body.brand,
-        description: body.description,
-        price: body.price,
-        categoryKey: body.categoryKey,
-        image: body.image,
-        rating: 0,
-        reviews: 0,
-        inStock: body.inStock ?? (body.stockQuantity ?? 0) > 0,
-        stockQuantity: body.stockQuantity ?? (body.inStock ? 50 : 0),
-        featured: body.featured ?? false,
-      },
+      data: productDataWithoutWeight,
     })
 
+    console.log('✅ Product created successfully:', created.id)
     return NextResponse.json({ product: created })
-  } catch (_error) {
-    return NextResponse.json({ error: "Failed to create product" }, { status: 500 })
+  } catch (error) {
+    console.error('❌ Error in POST /api/admin/products:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    
+    return NextResponse.json({ 
+      error: "Failed to create product",
+      message: errorMessage,
+      stack: errorStack
+    }, { status: 500 })
   }
 }

@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/lib/auth-context"
-import { Chrome, Facebook, Sparkles, Lock, Mail, User } from "lucide-react"
+import { useTranslation } from "@/lib/i18n/translation-provider"
+import { Chrome, Facebook, Sparkles, Lock, Mail, User, Eye, EyeOff } from "lucide-react"
 
 export default function RegisterPage() {
   const [name, setName] = useState("")
@@ -17,38 +18,65 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [error, setError] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
+  const [showVerification, setShowVerification] = useState(false)
+  const [verificationCode, setVerificationCode] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
   const { register, loginWithGoogle, loginWithFacebook, isLoading } = useAuth()
+  const { t } = useTranslation()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
     if (!name || !email || !password || !confirmPassword) {
-      setError("Por favor completa todos los campos")
+      setError(t("Please complete all fields"))
       return
     }
 
     if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden")
+      setError(t("Passwords do not match"))
       return
     }
 
     if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres")
+      setError(t("Password must be at least 6 characters"))
       return
     }
 
     if (!acceptTerms) {
-      setError("Debes aceptar los términos y condiciones")
+      setError(t("You must accept the terms and conditions"))
       return
     }
 
     try {
+      // Usar Firebase DIRECTAMENTE - sin API
       await register(email, password, name)
-      router.push("/")
+      
+      // Email verification automático - mostrar mensaje
+      setSuccessMessage("¡Cuenta creada! Revisa tu email para verificarla. Te enviamos un link de verificación automático.")
+      setShowVerification(true)
     } catch (err) {
-      setError("Error al crear la cuenta")
+      const errorMessage = err instanceof Error ? err.message : "Register failed"
+      
+      if (errorMessage.startsWith("VERIFY_NEEDED:")) {
+        setSuccessMessage(errorMessage.replace("VERIFY_NEEDED:", ""))
+        setShowVerification(true)
+      } else {
+        setError(t(errorMessage))
+      }
+    }
+  }
+
+  // Firebase maneja verificación automática - no necesita código
+  const handleResendEmail = async () => {
+    try {
+      await register(email, password, name)
+      setSuccessMessage("Email reenviado. Revisa tu bandeja de entrada.")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al reenviar email")
     }
   }
 
@@ -79,9 +107,11 @@ export default function RegisterPage() {
         <div className="relative z-10 max-w-md flex flex-col items-center">
           <Link href="/" className="mb-8">
             <img 
-              src="https://i.ibb.co/3ysKSJRT/Tech-Zone-store-10.png" 
+              src="/logo-optimized.png" 
               alt="TechZone" 
               className="h-32 w-auto object-contain drop-shadow-2xl"
+              width="400"
+              height="136"
             />
           </Link>
         </div>
@@ -93,9 +123,11 @@ export default function RegisterPage() {
           {/* Mobile Logo */}
           <Link href="/" className="md:hidden flex items-center justify-center mb-8">
             <img 
-              src="https://i.ibb.co/3ysKSJRT/Tech-Zone-store-10.png" 
+              src="/logo-optimized.png" 
               alt="TechZone" 
               className="h-12 w-auto object-contain"
+              width="150"
+              height="51"
             />
           </Link>
 
@@ -104,13 +136,20 @@ export default function RegisterPage() {
             <p className="text-gray-600">Únete a TechZone</p>
           </div>
 
+          {successMessage && (
+            <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-green-600 text-sm">{successMessage}</p>
+            </div>
+          )}
+
           {error && (
             <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-600 text-sm">{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {!showVerification ? (
+            <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-medium text-gray-700">
                 Nombre completo
@@ -120,7 +159,7 @@ export default function RegisterPage() {
                 <Input
                   id="name"
                   type="text"
-                  placeholder="Juan Pérez"
+                  placeholder="Nombre completo"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="pl-10 h-11 border-gray-300 focus:border-blue-500"
@@ -155,13 +194,20 @@ export default function RegisterPage() {
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 h-11 border-gray-300 focus:border-blue-500"
+                  className="pl-10 pr-10 h-11 border-gray-300 focus:border-blue-500"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 
@@ -173,13 +219,20 @@ export default function RegisterPage() {
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   id="confirmPassword"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10 h-11 border-gray-300 focus:border-blue-500"
+                  className="pl-10 pr-10 h-11 border-gray-300 focus:border-blue-500"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 
@@ -216,12 +269,49 @@ export default function RegisterPage() {
             <Button
               type="submit"
               className="w-full h-12 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 border border-blue-400/20"
-              disabled={isLoading}
+              disabled={isLoading || !acceptTerms}
             >
               {isLoading ? "Creando..." : "Crear Cuenta"}
             </Button>
           </form>
+          ) : (
+            <div className="space-y-6">
+              <div className="text-center">
+                <Mail className="w-16 h-16 mx-auto mb-4 text-blue-600" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  ¡Cuenta Creada!
+                </h3>
+                <p className="text-gray-600">
+                  Te enviamos un email de verificación automático a:<br />
+                  <span className="font-semibold">{email}</span>
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Revisa tu bandeja de entrada y haz click en el link de verificación.
+                </p>
+              </div>
 
+              <div className="text-center space-y-3">
+                <Button
+                  onClick={() => router.push("/login")}
+                  className="w-full h-12"
+                >
+                  Ir al Inicio de Sesión
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={handleResendEmail}
+                  disabled={isLoading}
+                  className="w-full"
+                >
+                  {isLoading ? "Enviando..." : "Reenviar Email"}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {!showVerification && (
+            <>
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               ¿Ya tienes cuenta?{" "}
@@ -241,13 +331,13 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="mt-6">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleGoogleLogin}
                 disabled={isLoading}
-                className="h-12 border-2 border-gray-300 hover:border-blue-400 bg-white hover:bg-blue-50 text-gray-700 hover:text-gray-800 font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-[1.01] transition-all duration-200"
+                className="w-full h-12 border-2 border-gray-300 hover:border-blue-400 bg-white hover:bg-blue-50 text-gray-700 hover:text-gray-800 font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-[1.01] transition-all duration-200"
               >
                 <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -258,22 +348,10 @@ export default function RegisterPage() {
                 <span className="hidden sm:inline">Google</span>
                 <span className="sm:hidden">G</span>
               </Button>
-              
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleFacebookLogin}
-                disabled={isLoading}
-                className="h-12 border-2 border-gray-300 hover:border-blue-400 bg-white hover:bg-blue-50 text-gray-700 hover:text-gray-800 font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-[1.01] transition-all duration-200"
-              >
-                <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
-                  <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-                <span className="hidden sm:inline">Facebook</span>
-                <span className="sm:hidden">F</span>
-              </Button>
             </div>
           </div>
+            </>
+          )}
         </div>
       </div>
     </div>

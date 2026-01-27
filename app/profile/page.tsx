@@ -204,16 +204,6 @@ export default function ProfilePage() {
                       Cambiar
                     </Button>
                   </div>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-border">
-                    <div>
-                      <p className="font-medium">Autenticación de dos factores</p>
-                      <p className="text-sm text-muted-foreground">Agrega una capa extra de seguridad</p>
-                    </div>
-                    <Button variant="outline" size="sm" className="bg-transparent">
-                      Configurar
-                    </Button>
-                  </div>
                 </div>
               </CardContent>
             </Card>

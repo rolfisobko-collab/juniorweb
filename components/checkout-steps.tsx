@@ -9,6 +9,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { CreditCard, Truck, Package, MapPin, Store, Clock, ChevronLeft, ChevronRight, Check } from "lucide-react"
 
+// Datos de Paraguay para AEX
+const PARAGUAY_DEPARTMENTS = [
+  { value: 'asuncion', label: 'Asunción' },
+  { value: 'central', label: 'Central' },
+  { value: 'alto_parana', label: 'Alto Paraná' },
+  { value: 'itapua', label: 'Itapúa' },
+  { value: 'concepcion', label: 'Concepción' },
+  { value: 'san_pedro', label: 'San Pedro' },
+  { value: 'cordillera', label: 'Cordillera' },
+  { value: 'guaira', label: 'Guairá' },
+  { value: 'caaguazu', label: 'Caaguazú' },
+  { value: 'caazapa', label: 'Caazapá' },
+  { value: 'canindeyu', label: 'Canindeyú' },
+  { value: 'neembucu', label: 'Ñeembucú' },
+  { value: 'amambay', label: 'Amambay' },
+  { value: 'presidente_hayes', label: 'Presidente Hayes' },
+  { value: 'alto_paraguay', label: 'Alto Paraguay' },
+  { value: 'boqueron', label: 'Boquerón' }
+]
+
 interface CheckoutStepsProps {
   items: any[]
   user: any
@@ -25,6 +45,8 @@ export default function CheckoutSteps({ items, user, total }: CheckoutStepsProps
     department: "",
     notes: ""
   })
+  const [aexCalculating, setAexCalculating] = useState(false)
+  const [showAexForm, setShowAexForm] = useState(false)
   const [paymentData, setPaymentData] = useState({
     method: "card",
     currency: "PYG"
@@ -49,19 +71,20 @@ export default function CheckoutSteps({ items, user, total }: CheckoutStepsProps
       address: "Av. Eusebio Ayala 1234, Asunción"
     },
     {
-      id: "encomienda",
-      name: "Encomienda",
-      description: "Envío por Correo Paraguayo",
-      cost: 45000,
-      icon: Package,
-      time: "2-3 días hábiles",
-      requiresAddress: true
+      id: "aex",
+      name: "Envío AEX",
+      description: "Envío por Agencia de Envíos Express",
+      cost: null, // ← Se calcula con API
+      icon: Truck,
+      time: "Según servicio",
+      requiresAddress: true,
+      needsCalculation: true // ← Indica que necesita cálculo
     },
     {
       id: "coordi",
       name: "Envío a Coordinar",
       description: "Coordinamos entrega directa",
-      cost: 35000,
+      cost: null, // ← Sin precio, se le pasa al cliente
       icon: Truck,
       time: "1-2 días hábiles",
       requiresAddress: true
@@ -92,6 +115,77 @@ export default function CheckoutSteps({ items, user, total }: CheckoutStepsProps
     const shippingCost = shippingData.cost || 0
     const taxAmount = total * 0.1
     return total + shippingCost + taxAmount
+  }
+
+  // Calcular envío con AEX
+  const calculateAEXShipping = async (city: string, department: string) => {
+    setAexCalculating(true)
+    
+    try {
+      // Calcular datos del paquete desde el carrito
+      const peso_total = items.reduce((sum, item) => {
+        const productWeight = item.product.weight || 0.5
+        return sum + (productWeight * item.quantity)
+      }, 0)
+      
+      const valor_total = items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+      
+      const paquete = {
+        peso: Math.round(peso_total * 100) / 100,
+        largo: 30,
+        ancho: 20,
+        alto: 15,
+        valor_declarado: valor_total,
+        descripcion: `Pedido con ${items.length} productos`
+      }
+
+      const request = {
+        datos_envio: {
+          origen: {
+            ciudad: "Ciudad del Este",
+            departamento: "Alto Paraná",
+            direccion: "Tienda Online - Centro de Distribución"
+          },
+          destino: {
+            ciudad: city,
+            departamento: department,
+            direccion: shippingData.address || "Dirección del cliente"
+          },
+          paquetes: [paquete],
+          servicio: "express"
+        }
+      }
+
+      console.log('📦 Enviando a AEX:', request)
+
+      const response = await fetch('/api/aex/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request)
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Actualizar el costo del envío
+        setShippingData(prev => ({
+          ...prev,
+          cost: data.data.cotizacion.costo_total,
+          city: city,
+          department: department
+        }))
+        
+        console.log('✅ Costo AEX calculado:', data.data.cotizacion.costo_total)
+        setShowAexForm(false)
+      } else {
+        alert('Error calculando envío: ' + (data.error || 'Error desconocido'))
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error de conexión con AEX')
+    } finally {
+      setAexCalculating(false)
+    }
   }
 
   return (
@@ -252,7 +346,7 @@ export default function CheckoutSteps({ items, user, total }: CheckoutStepsProps
                           </div>
                           <div className="text-right">
                             <div className="text-2xl font-bold text-primary">
-                              {option.cost === 0 ? "Gratis" : `Gs. ${option.cost.toLocaleString('es-PY')}`}
+                              {option.cost === 0 ? "Gratis" : option.cost === null ? "A calcular" : `Gs. ${option.cost.toLocaleString('es-PY')}`}
                             </div>
                           </div>
                         </div>
@@ -262,6 +356,97 @@ export default function CheckoutSteps({ items, user, total }: CheckoutStepsProps
                               <Check className="w-4 h-4" />
                               <span className="text-sm font-medium">Opción seleccionada</span>
                             </div>
+                            
+                            {/* Si es AEX y necesita cálculo */}
+                            {option.needsCalculation && (
+                              <div className="mt-3 space-y-3">
+                                {!showAexForm ? (
+                                  <div className="flex items-center gap-2 text-sm text-green-600">
+                                    <MapPin className="h-4 w-4" />
+                                    <span>Selecciona tu ubicación para calcular el costo</span>
+                                    
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      className="ml-auto"
+                                      onClick={() => setShowAexForm(true)}
+                                    >
+                                      <MapPin className="h-4 w-4 mr-2" />
+                                      Seleccionar Ciudad
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-3 p-3 border rounded-lg bg-gray-50">
+                                    <h4 className="font-semibold text-sm">Datos de Envío AEX</h4>
+                                    
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div>
+                                        <Label className="text-xs">Departamento</Label>
+                                        <Select onValueChange={(value) => {
+                                          const dept = PARAGUAY_DEPARTMENTS.find(d => d.value === value)
+                                          if (dept) {
+                                            // Aquí iría la lógica para cargar ciudades
+                                          }
+                                        }}>
+                                          <SelectTrigger className="h-8 text-sm">
+                                            <SelectValue placeholder="Departamento" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {PARAGUAY_DEPARTMENTS.map((dept) => (
+                                              <SelectItem key={dept.value} value={dept.value}>
+                                                {dept.label}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      
+                                      <div>
+                                        <Label className="text-xs">Ciudad</Label>
+                                        <Select>
+                                          <SelectTrigger className="h-8 text-sm">
+                                            <SelectValue placeholder="Ciudad" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {/* Ciudades se cargarían dinámicamente */}
+                                            <SelectItem value="asuncion">Asunción</SelectItem>
+                                            <SelectItem value="ciudad_del_este">Ciudad del Este</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex gap-2">
+                                      <Button 
+                                        size="sm" 
+                                        onClick={() => calculateAEXShipping("Asunción", "Asunción")}
+                                        disabled={aexCalculating}
+                                      >
+                                        {aexCalculating ? (
+                                          <>
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                            Calculando...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Truck className="h-4 w-4 mr-2" />
+                                            Calcular Envío
+                                          </>
+                                        )}
+                                      </Button>
+                                      
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline"
+                                        onClick={() => setShowAexForm(false)}
+                                      >
+                                        Cancelar
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

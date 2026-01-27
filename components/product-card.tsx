@@ -11,12 +11,14 @@ import { useCart } from "@/lib/cart-context"
 import { useFavorites } from "@/lib/favorites-context"
 import { useCurrency } from "@/lib/currency-context"
 import { useToast } from "@/hooks/use-toast"
+import { useTranslation } from "@/lib/i18n/translation-provider"
 
 interface ProductCardProps {
   product: UnifiedProduct
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+  const { t } = useTranslation()
   const { addItem } = useCart()
   const { toggleFavorite, isFavorite } = useFavorites()
   const { formatPrice } = useCurrency()
@@ -26,7 +28,7 @@ export function ProductCard({ product }: ProductCardProps) {
     e.preventDefault()
     addItem(product)
     toast({
-      title: "Agregado al carrito",
+      title: t('Product Added to cart'),
       description: `${product.name} ha sido agregado a tu carrito`,
     })
   }
@@ -46,20 +48,12 @@ export function ProductCard({ product }: ProductCardProps) {
     <Link href={`/products/${product.id}`}>
       <Card className="group overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 h-full bg-white rounded-2xl">
         <CardContent className="p-0">
-          <div className="relative aspect-[3/4] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
+          <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
             <img
               src={product.image || "/placeholder.svg"}
               alt={product.name}
-              className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                objectPosition: 'center'
-              }}
+              className="absolute inset-0 w-full h-full object-cover object-[0_0] transition-transform duration-700 group-hover:scale-110"
+              style={{ objectPosition: 'top center' }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = "/placeholder.svg";
@@ -81,26 +75,26 @@ export function ProductCard({ product }: ProductCardProps) {
             )}
           </div>
 
-          <div className="p-4 space-y-3">
-            <div className="space-y-2">
+          <div className="p-3 space-y-2">
+            <div className="space-y-1">
               <p className="text-xs text-gray-500 uppercase tracking-wide font-medium truncate">
                 {product.brand}
               </p>
-              <h3 className="font-semibold text-sm line-clamp-2 leading-tight group-hover:text-blue-500 transition-colors duration-200 min-h-[2.5rem] text-gray-800">
+              <h3 className="font-semibold text-sm line-clamp-2 leading-tight group-hover:text-blue-500 transition-colors duration-200 min-h-[2rem] text-gray-800">
                 {product.name}
               </h3>
             </div>
 
-            <div className="space-y-3 pt-2">
-              <p className="text-lg font-bold text-gray-900">{formatPrice(product.price)}</p>
+            <div className="space-y-2 pt-1">
+              <p className="text-base font-bold text-gray-900">{formatPrice(product.price)}</p>
               <Button
                 size="sm"
-                className="w-full h-9 text-xs bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+                className="w-full h-8 text-xs bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
                 onClick={handleAddToCart}
                 disabled={!product.inStock}
               >
-                <ShoppingCart className="h-4 w-4 mr-2" />
-                Añadir al Carrito
+                <ShoppingCart className="h-3 w-3 mr-1" />
+                {t('Add')}
               </Button>
             </div>
           </div>

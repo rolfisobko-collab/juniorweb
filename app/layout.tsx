@@ -1,5 +1,6 @@
 import type React from "react"
 import { Inter } from "next/font/google"
+import Script from "next/script"
 import ClientLayout from "./client-layout"
 import "./globals.css"
 
@@ -12,6 +13,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
+      <head>
+        <Script
+          src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js"
+          strategy="afterInteractive"
+        />
+        <Script
+          src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js"
+          strategy="afterInteractive"
+        />
+      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <ClientLayout>{children}</ClientLayout>
       </body>

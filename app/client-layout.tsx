@@ -8,6 +8,7 @@ import { AdminProvider } from "@/lib/admin-context"
 import { CartProvider } from "@/lib/cart-context"
 import { FavoritesProvider } from "@/lib/favorites-context"
 import { CurrencyProvider } from "@/lib/currency-context"
+import { TranslationProvider } from "@/lib/i18n/translation-provider"
 import { Header } from "@/components/header"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import Footer from "@/components/footer"
@@ -36,21 +37,23 @@ export default function ClientLayout({
     (children as any)?.props?.children?.type?.name === "NotFound"
 
   return (
-    <AuthProvider>
-      <AdminProvider>
-        <CartProvider>
-          <FavoritesProvider>
-            <CurrencyProvider>
-              <ScrollToTop />
-              {!isPanelRoute && !isAuthRoute && !isNotFoundPage && <Header />}
-              {children}
-              {!isPanelRoute && !isAuthRoute && !isNotFoundPage && <Footer />}
-              <Toaster />
-            </CurrencyProvider>
-          </FavoritesProvider>
-        </CartProvider>
-      </AdminProvider>
-      <Analytics />
-    </AuthProvider>
+    <TranslationProvider>
+      <AuthProvider>
+        <AdminProvider>
+          <CartProvider>
+            <FavoritesProvider>
+              <CurrencyProvider>
+                <ScrollToTop />
+                {!isPanelRoute && !isAuthRoute && !isNotFoundPage && <Header />}
+                {children}
+                {!isPanelRoute && !isAuthRoute && !isNotFoundPage && <Footer />}
+                <Toaster />
+              </CurrencyProvider>
+            </FavoritesProvider>
+          </CartProvider>
+        </AdminProvider>
+        <Analytics />
+      </AuthProvider>
+    </TranslationProvider>
   )
 }

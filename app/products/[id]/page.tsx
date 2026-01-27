@@ -10,8 +10,10 @@ import { useCart } from "@/lib/cart-context"
 import { useFavorites } from "@/lib/favorites-context"
 import { useToast } from "@/hooks/use-toast"
 import { ProductCard } from "@/components/product-card"
+import { useTranslation } from "@/lib/i18n/translation-provider"
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t } = useTranslation()
   const { id } = use(params)
   const router = useRouter()
   const [product, setProduct] = useState<UnifiedProduct | null>(null)
@@ -158,8 +160,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   if (!product) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold mb-4">Producto no encontrado</h1>
-        <Button onClick={() => router.push("/products")}>Volver al catálogo</Button>
+        <h1 className="text-2xl font-bold mb-4">{t('Product not found')}</h1>
+        <Button onClick={() => router.push("/products")}>{t('Back to catalog')}</Button>
       </div>
     )
   }
@@ -167,18 +169,18 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const handleAddToCart = () => {
     addItem(product, quantity)
     toast({
-      title: "Agregado al carrito",
-      description: `${quantity}x ${product.name} agregado a tu carrito`,
+      title: t('Product Added to cart'),
+      description: `${quantity}x ${product.name} ${t('Product added to favorites')}`,
     })
   }
 
   const handleToggleFavorite = () => {
     toggleFavorite(product)
     toast({
-      title: isFavorite(product.id) ? "Eliminado de favoritos" : "Agregado a favoritos",
+      title: isFavorite(product.id) ? t('Product removed from favorites') : t('Product added to favorites'),
       description: isFavorite(product.id)
-        ? `${product.name} ha sido eliminado de tus favoritos`
-        : `${product.name} ha sido agregado a tus favoritos`,
+        ? `${product.name} ${t('Product removed from favorites')}`
+        : `${product.name} ${t('Product added to favorites')}`,
     })
   }
 
@@ -186,7 +188,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     <div className="container mx-auto px-4 py-8">
       <Button variant="ghost" onClick={() => router.back()} className="mb-6">
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Volver
+        {t('Product Back')}
       </Button>
 
       <div className="grid md:grid-cols-2 gap-12">
@@ -209,7 +211,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 ))}
                 <span className="ml-2 font-semibold">{product.rating}</span>
               </div>
-              <span className="text-muted-foreground">({product.reviews} reseñas)</span>
+              <span className="text-muted-foreground">({product.reviews} {t('Product reviews')})</span>
             </div>
 
             <p className="text-lg text-muted-foreground leading-relaxed">{product.description}</p>
@@ -217,12 +219,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
           <div className="border-t border-b border-border py-6">
             <p className="text-5xl font-bold font-serif mb-2">${product.price}</p>
-            <p className="text-sm text-muted-foreground">Impuestos incluidos</p>
+            <p className="text-sm text-muted-foreground">{t('Product Taxes included')}</p>
           </div>
 
           <div className="space-y-4">
             <div className="flex items-center gap-4">
-              <label className="font-semibold">Cantidad:</label>
+              <label className="font-semibold">{t('Product Quantity:')}</label>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))}>
                   -
@@ -242,7 +244,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 disabled={!product.inStock}
               >
                 <ShoppingCart className="mr-2 h-5 w-5" />
-                {product.inStock ? "Agregar al Carrito" : "Agotado"}
+                {product.inStock ? t('Product Add to Cart') : t('Product Out of stock')}
               </Button>
               <Button size="lg" variant="outline" className="h-12 px-4 bg-transparent" onClick={handleToggleFavorite}>
                 <Heart className={`h-5 w-5 ${isFavorite(product.id) ? "fill-current text-red-500" : ""}`} />
@@ -253,11 +255,11 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           <div className="space-y-3 pt-6">
             <div className="flex items-center gap-3">
               <Truck className="h-5 w-5 text-primary" />
-              <span className="text-sm">Envío gratuito en compras superiores a $100</span>
+              <span className="text-sm">{t('Product Free shipping')}</span>
             </div>
             <div className="flex items-center gap-3">
               <ShieldCheck className="h-5 w-5 text-primary" />
-              <span className="text-sm">Garantía premium de 2 años</span>
+              <span className="text-sm">{t('Product Premium warranty')}</span>
             </div>
           </div>
         </div>
@@ -266,8 +268,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       {/* Recommended Products Section */}
       <div className="mt-16 pt-8 border-t">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">También te puede interesar</h2>
-          <p className="text-gray-600">Productos similares que podrían gustarte</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('Product You may also be interested')}</h2>
+          <p className="text-gray-600">{t('Product Similar products')}</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {recommendedProducts.map((recommendedProduct) => (
@@ -283,10 +285,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   <div className="p-4 space-y-3">
                     <div className="space-y-2">
                       <p className="text-xs text-gray-500 uppercase tracking-wide font-medium truncate">
-                        Marca
+                        {t('Product Brand')}
                       </p>
                       <h3 className="font-semibold text-sm line-clamp-2 leading-tight group-hover:text-blue-500 transition-colors duration-200 min-h-[2.5rem] text-gray-800">
-                        Cargando recomendados...
+                        {t('Product Loading recommendations')}
                       </h3>
                     </div>
                     <div className="space-y-3 pt-2">
@@ -295,7 +297,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                         size="sm"
                         className="w-full h-9 text-xs bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
                       >
-                        Ver producto
+                        {t('Product View product')}
                       </Button>
                     </div>
                   </div>

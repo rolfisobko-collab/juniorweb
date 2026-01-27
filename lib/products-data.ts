@@ -16,11 +16,11 @@ export interface Product {
 export const products: Product[] = [
   {
     id: "1",
-    name: "iPhone 15 Pro Max",
+    name: "iPhone 17 Pro Max",
     category: "electronics",
-    price: 1199,
-    image: "/iphone-15-pro-max-premium-smartphone.jpg",
-    description: "El smartphone más avanzado con chip A17 Pro y cámara profesional",
+    price: 1299,
+    image: "https://i.ebayimg.com/images/g/zcgAAeSw~d5owejX/s-l600.jpg",
+    description: "El smartphone más avanzado con chip A19 Pro y cámara profesional",
     brand: "Apple",
     rating: 4.9,
     reviews: 1234,

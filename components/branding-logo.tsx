@@ -29,7 +29,7 @@ export function BrandingLogo({ href = "/", variant = "header", className = "" }:
   const isSidebar = variant === "sidebar"
 
   return (
-    <Link href={href} className={`flex items-center group ${className}`}>
+    <Link href={href} className={`flex items-center justify-center group ${className}`}>
       {branding.logoImage ? (
         <img
           src={branding.logoImage || "/placeholder.svg"}

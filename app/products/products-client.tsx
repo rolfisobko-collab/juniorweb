@@ -11,29 +11,40 @@ interface ProductsClientProps {
   initialProducts: ProductWithCategory[]
   categories: any[]
   initialCategory?: string
+  initialSubcategory?: string
 }
 
 export default function ProductsClient({ 
   initialProducts, 
   categories, 
-  initialCategory 
+  initialCategory,
+  initialSubcategory
 }: ProductsClientProps) {
   const [products, setProducts] = useState<ProductWithCategory[]>(initialProducts)
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory || "all")
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>(initialSubcategory || "")
   const [sortBy, setSortBy] = useState("featured")
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    console.log('Initial params:', { initialCategory, initialSubcategory })
     if (initialCategory) {
+      console.log('Setting initial category:', initialCategory)
       setSelectedCategory(initialCategory)
     }
-  }, [initialCategory])
+    if (initialSubcategory) {
+      console.log('Setting initial subcategory:', initialSubcategory)
+      setSelectedSubcategory(initialSubcategory)
+    }
+  }, [initialCategory, initialSubcategory])
 
-  const fetchProducts = async (category: string, sort: string) => {
+  const fetchProducts = async (category: string, subcategory: string, sort: string) => {
+    console.log('Fetching products:', { category, subcategory, sort })
     setLoading(true)
     try {
       const params = new URLSearchParams({
         ...(category !== "all" && { category }),
+        ...(subcategory && { subcategory }),
         ...(sort && { sort }),
         limit: "50"
       })
@@ -52,11 +63,12 @@ export default function ProductsClient({
   }
 
   useEffect(() => {
-    fetchProducts(selectedCategory, sortBy)
-  }, [selectedCategory, sortBy])
+    console.log('Current state:', { selectedCategory, selectedSubcategory, sortBy })
+    fetchProducts(selectedCategory, selectedSubcategory, sortBy)
+  }, [selectedCategory, selectedSubcategory, sortBy])
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 min-h-screen">
       <div className="mb-8">
         <h1 className="font-serif text-4xl md:text-5xl font-bold mb-4">Catálogo de Productos</h1>
         <p className="text-lg text-muted-foreground">
@@ -114,7 +126,7 @@ export default function ProductsClient({
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-8">
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { MapPin, X, Search } from "lucide-react"
+import { MapPin, X } from "lucide-react"
 
 interface ParaguayLocationSelectProps {
   isOpen: boolean
@@ -65,35 +65,29 @@ const paraguayData = {
 export default function ParaguayLocationSelect({ isOpen, onClose, onLocationSelect }: ParaguayLocationSelectProps) {
   const [selectedDepartment, setSelectedDepartment] = useState("")
   const [selectedCity, setSelectedCity] = useState("")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filteredCities, setFilteredCities] = useState<string[]>([])
+  const [street, setStreet] = useState("")
+  const [streetNumber, setStreetNumber] = useState("")
+  const [apartment, setApartment] = useState("")
 
   const departments = Object.keys(paraguayData)
 
   const handleDepartmentChange = (department: string) => {
     setSelectedDepartment(department)
     setSelectedCity("")
-    setFilteredCities([])
-    setSearchTerm("")
-  }
-
-  const handleCitySearch = (term: string) => {
-    setSearchTerm(term)
-    if (!selectedDepartment || !term) {
-      setFilteredCities([])
-      return
-    }
-
-    const cities = paraguayData[selectedDepartment as keyof typeof paraguayData]?.cities || []
-    const filtered = cities.filter(city => 
-      city.toLowerCase().includes(term.toLowerCase())
-    )
-    setFilteredCities(filtered)
   }
 
   const handleLocationSelect = () => {
-    if (selectedDepartment && selectedCity) {
-      const fullAddress = `${selectedCity}, ${selectedDepartment}, Paraguay`
+    if (selectedDepartment && selectedCity && street && streetNumber) {
+      const addressParts = [
+        `${street} ${streetNumber}`,
+        apartment && `Dept ${apartment}`,
+        selectedCity,
+        selectedDepartment,
+        "Paraguay"
+      ].filter(Boolean)
+
+      const fullAddress = addressParts.join(", ")
+      
       onLocationSelect({
         address: fullAddress,
         city: selectedCity,
@@ -137,38 +131,67 @@ export default function ParaguayLocationSelect({ isOpen, onClose, onLocationSele
           {selectedDepartment && (
             <div className="space-y-2">
               <Label htmlFor="city">Ciudad *</Label>
+              <Select value={selectedCity} onValueChange={setSelectedCity}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar ciudad" />
+                </SelectTrigger>
+                <SelectContent>
+                  {currentCities.map((city) => (
+                    <SelectItem key={city} value={city}>
+                      {city}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Dirección */}
+          {selectedCity && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="street">Calle *</Label>
+                  <Input
+                    id="street"
+                    placeholder="Ej: Eusebio Ayala"
+                    value={street}
+                    onChange={(e) => setStreet(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="number">N° *</Label>
+                  <Input
+                    id="number"
+                    placeholder="1234"
+                    value={streetNumber}
+                    onChange={(e) => setStreetNumber(e.target.value)}
+                  />
+                </div>
+              </div>
+              
               <div className="space-y-2">
+                <Label htmlFor="apartment">Departamento (Opcional)</Label>
                 <Input
-                  id="city-search"
-                  placeholder="Buscar ciudad..."
-                  value={searchTerm}
-                  onChange={(e) => handleCitySearch(e.target.value)}
-                  className="flex items-center gap-2"
+                  id="apartment"
+                  placeholder="Ej: 3A, Torre 2, Piso 5"
+                  value={apartment}
+                  onChange={(e) => setApartment(e.target.value)}
                 />
-                <Select value={selectedCity} onValueChange={setSelectedCity}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar ciudad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(searchTerm ? filteredCities : currentCities).map((city) => (
-                      <SelectItem key={city} value={city}>
-                        {city}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
           )}
 
           {/* Ubicación seleccionada */}
-          {selectedDepartment && selectedCity && (
+          {selectedDepartment && selectedCity && street && streetNumber && (
             <div className="space-y-2 p-4 bg-muted rounded-lg">
               <Label>Ubicación Seleccionada</Label>
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium">
-                  {selectedCity}, {selectedDepartment}, Paraguay
+                  {street} {streetNumber}
+                  {apartment && `, Dept ${apartment}`}
+                  {`, ${selectedCity}, ${selectedDepartment}, Paraguay`}
                 </span>
               </div>
             </div>
@@ -181,7 +204,7 @@ export default function ParaguayLocationSelect({ isOpen, onClose, onLocationSele
             </Button>
             <Button 
               onClick={handleLocationSelect}
-              disabled={!selectedDepartment || !selectedCity}
+              disabled={!selectedDepartment || !selectedCity || !street || !streetNumber}
             >
               Confirmar Ubicación
             </Button>

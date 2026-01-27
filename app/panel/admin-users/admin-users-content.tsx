@@ -222,7 +222,7 @@ export default function AdminUsersContent() {
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Juan Pérez"
+                placeholder="Nombre completo"
               />
             </div>
 

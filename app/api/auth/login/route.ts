@@ -21,6 +21,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
+    // Verificar si el email ha sido verificado
+    if (!user.emailVerified) {
+      return NextResponse.json({ 
+        error: "Please verify your email before logging in. Check your inbox for the verification code.",
+        requiresVerification: true,
+        email: user.email
+      }, { status: 401 })
+    }
+
     const ok = await verifyPassword(password, user.passwordHash)
     if (!ok) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })

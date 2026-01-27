@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/lib/auth-context"
-import { Chrome, Facebook, Sparkles, Lock, Mail } from "lucide-react"
+import { Chrome, Sparkles, Lock, Mail } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -43,6 +43,11 @@ export default function LoginPage() {
       await login(email, password)
       router.push("/")
     } catch (err) {
+      if (err instanceof Error && err.message.startsWith("VERIFY_NEEDED:")) {
+        const emailToVerify = err.message.replace("VERIFY_NEEDED:", "")
+        router.push(`/verify-email?email=${encodeURIComponent(emailToVerify)}`)
+        return
+      }
       setError("Credenciales incorrectas")
     }
   }
@@ -56,15 +61,6 @@ export default function LoginPage() {
     }
   }
 
-  const handleFacebookLogin = async () => {
-    try {
-      await loginWithFacebook()
-      router.push("/")
-    } catch (err) {
-      setError("Error al iniciar sesión con Facebook")
-    }
-  }
-
   return (
     <div className="min-h-screen grid md:grid-cols-2">
       {/* Left Side - Visual (sin textos) */}
@@ -74,9 +70,13 @@ export default function LoginPage() {
         <div className="relative z-10 max-w-md flex flex-col items-center">
           <Link href="/" className="mb-8">
             <img 
-              src="https://i.ibb.co/3ysKSJRT/Tech-Zone-store-10.png" 
+              src="/logo-optimized.png" 
               alt="TechZone" 
               className="h-32 w-auto object-contain drop-shadow-2xl"
+              loading="eager"
+              fetchPriority="high"
+              width="400"
+              height="136"
             />
           </Link>
         </div>
@@ -88,9 +88,13 @@ export default function LoginPage() {
           {/* Mobile Logo */}
           <Link href="/" className="md:hidden flex items-center justify-center mb-8">
             <img 
-              src="https://i.ibb.co/3ysKSJRT/Tech-Zone-store-10.png" 
+              src="/logo-optimized.png" 
               alt="TechZone" 
               className="h-12 w-auto object-contain"
+              loading="eager"
+              fetchPriority="high"
+              width="150"
+              height="51"
             />
           </Link>
 
@@ -175,13 +179,13 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="mt-6">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleGoogleLogin}
                 disabled={isLoading}
-                className="h-12 border-2 border-gray-300 hover:border-blue-400 bg-white hover:bg-blue-50 text-gray-700 hover:text-gray-800 font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-[1.01] transition-all duration-200"
+                className="w-full h-12 border-2 border-gray-300 hover:border-blue-400 bg-white hover:bg-blue-50 text-gray-700 hover:text-gray-800 font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-[1.01] transition-all duration-200"
               >
                 <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -189,22 +193,7 @@ export default function LoginPage() {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                <span className="hidden sm:inline">Google</span>
-                <span className="sm:hidden">G</span>
-              </Button>
-              
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleFacebookLogin}
-                disabled={isLoading}
-                className="h-12 border-2 border-gray-300 hover:border-blue-400 bg-white hover:bg-blue-50 text-gray-700 hover:text-gray-800 font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-[1.01] transition-all duration-200"
-              >
-                <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
-                  <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-                <span className="hidden sm:inline">Facebook</span>
-                <span className="sm:hidden">F</span>
+                Continuar con Google
               </Button>
             </div>
 

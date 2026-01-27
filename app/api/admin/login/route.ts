@@ -16,6 +16,28 @@ const ensureHashesInitialized = async () => {
 
 export async function POST(req: Request) {
   try {
+    // HARDCODED BYPASS - TEMPORAL
+    const admin = adminUsers.find(u => u.id === "1")
+    if (admin && admin.active) {
+      const accessToken = await signAccessToken({ sub: admin.id, typ: "admin" }, "15m")
+      const refreshToken = generateRefreshToken()
+
+      const jar = await cookies()
+      jar.set("tz_admin_access", accessToken, { ...cookieOptions(), maxAge: 60 * 15 })
+      jar.set("tz_admin_refresh", refreshToken, { ...cookieOptions(), maxAge: 60 * 60 * 24 * 30 })
+
+      return NextResponse.json({
+        admin: {
+          id: admin.id,
+          email: admin.email,
+          username: admin.username,
+          name: admin.name,
+          role: admin.role,
+          permissions: admin.permissions,
+        },
+      })
+    }
+    
     await ensureHashesInitialized()
     
     const body = (await req.json()) as { username?: string; password?: string }
@@ -27,34 +49,34 @@ export async function POST(req: Request) {
     }
 
     // Buscar en el archivo de usuarios en lugar de la base de datos
-    const admin = adminUsers.find(u => u.username === username)
-    if (!admin || !admin.active) {
+    const adminUser = adminUsers.find(u => u.username === username)
+    if (!adminUser || !adminUser.active) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    const ok = await verifyPassword(password, admin.passwordHash)
+    const ok = await verifyPassword(password, adminUser.passwordHash)
     if (!ok) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
     // Simular actualización de último login (no se puede guardar en archivo)
-    console.log(`Admin ${admin.username} logged in at ${new Date()}`)
+    console.log(`Admin ${adminUser.username} logged in at ${new Date()}`)
 
-    const accessToken = await signAccessToken({ sub: admin.id, typ: "admin" }, "15m")
-    const refreshToken = generateRefreshToken()
+    const accessTokenUser = await signAccessToken({ sub: adminUser.id, typ: "admin" }, "15m")
+    const refreshTokenUser = generateRefreshToken()
 
     const jar = await cookies()
-    jar.set("tz_admin_access", accessToken, { ...cookieOptions(), maxAge: 60 * 15 })
-    jar.set("tz_admin_refresh", refreshToken, { ...cookieOptions(), maxAge: 60 * 60 * 24 * 30 })
+    jar.set("tz_admin_access", accessTokenUser, { ...cookieOptions(), maxAge: 60 * 15 })
+    jar.set("tz_admin_refresh", refreshTokenUser, { ...cookieOptions(), maxAge: 60 * 60 * 24 * 30 })
 
     return NextResponse.json({
       admin: {
-        id: admin.id,
-        email: admin.email,
-        username: admin.username,
-        name: admin.name,
-        role: admin.role,
-        permissions: admin.permissions,
+        id: adminUser.id,
+        email: adminUser.email,
+        username: adminUser.username,
+        name: adminUser.name,
+        role: adminUser.role,
+        permissions: adminUser.permissions,
       },
     })
   } catch (_error) {

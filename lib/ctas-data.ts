@@ -1,8 +1,11 @@
 export interface CTA {
   id: string
   title: string
+  title_pt?: string
   description: string
+  description_pt?: string
   buttonText: string
+  buttonText_pt?: string
   buttonLink: string
   imageDesktop: string
   imageMobile: string
@@ -19,26 +22,32 @@ export interface CTA {
 export const defaultCTAs: CTA[] = [
   {
     id: "1",
-    title: "Nueva Colección iPhone 15",
-    description: "Descubre el futuro de la tecnología móvil con el nuevo iPhone 15 Pro Max",
-    buttonText: "Ver Ahora",
+    title: "iPhone 17 Pro Max",
+    title_pt: "iPhone 17 Pro Max",
+    description: "El futuro en tus manos. Chip A19 Pro y cámara revolucionaria.",
+    description_pt: "O futuro em suas mãos. Chip A19 Pro e câmera revolucionária.",
+    buttonText: "Comprar Ahora",
+    buttonText_pt: "Comprar Agora",
     buttonLink: "/products?category=electronics",
-    imageDesktop: "/iphone-15-pro-max-luxury-showcase.jpg",
-    imageMobile: "/iphone-15-pro-max-mobile-banner.jpg",
-    desktopWidth: 1200,
-    desktopHeight: 600,
-    mobileWidth: 600,
-    mobileHeight: 800,
+    imageDesktop: "https://i.ebayimg.com/images/g/zcgAAeSw~d5owejX/s-l1200.jpg",
+    imageMobile: "https://i.ebayimg.com/images/g/zcgAAeSw~d5owejX/s-l800.jpg",
+    desktopWidth: 280,
+    desktopHeight: 210,
+    mobileWidth: 240,
+    mobileHeight: 180,
     position: 1,
     isActive: true,
-    backgroundColor: "#1e40af",
+    backgroundColor: "#000000",
     textColor: "#ffffff",
   },
   {
     id: "2",
     title: "Fragancias de Lujo",
+    title_pt: "Fragrâncias de Luxo",
     description: "Perfumes exclusivos de las mejores casas del mundo",
+    description_pt: "Perfumes exclusivos das melhores casas do mundo",
     buttonText: "Explorar",
+    buttonText_pt: "Explorar",
     buttonLink: "/products?category=perfumes",
     imageDesktop: "/luxury-perfume-bottles-elegant-display.jpg",
     imageMobile: "/luxury-perfume-mobile-banner.jpg",

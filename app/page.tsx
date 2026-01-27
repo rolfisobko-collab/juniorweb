@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import HomepageProducts from "@/components/homepage-products"
 import { carouselSlides } from "@/lib/carousel-data"
@@ -7,22 +9,24 @@ import { getActiveHomeCategories } from "@/lib/home-categories-data"
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowRight, ShieldCheck, Truck, Zap, Package, Award } from "lucide-react"
+import { useTranslation } from "@/lib/i18n/translation-provider"
 
 export default function HomePage() {
+  const { t, language } = useTranslation()
   const activeCTAs = defaultCTAs.filter((cta) => cta.isActive).sort((a, b) => a.position - b.position)
   const homeCategories = getActiveHomeCategories()
 
   return (
     <div className="min-h-screen">
-      <HeroCarousel slides={carouselSlides} />
+      <HeroCarousel />
 
       {homeCategories.length > 0 && (
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
-              <h2 className="font-serif text-3xl md:text-4xl font-bold mb-4 text-gray-800">Explorar por Categorías</h2>
+              <h2 className="font-serif text-3xl md:text-4xl font-bold mb-4 text-gray-800">{t('Explore by Categories')}</h2>
               <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                Descubre nuestra amplia selección de productos organizados por categorías
+                {t('Discover our wide selection of products organized by categories')}
               </p>
             </div>
 
@@ -54,7 +58,7 @@ export default function HomePage() {
       )}
 
       <HomepageProducts 
-        title="Recomendado Para Ti" 
+        title={t('Recommended for You')} 
         limit={5}
         featured={true}
       />
@@ -69,8 +73,8 @@ export default function HomePage() {
                 <Truck className="h-7 w-7 text-white relative z-10" />
               </div>
               <div>
-                <p className="font-bold text-sm text-gray-800">Envío Gratis</p>
-                <p className="text-xs text-gray-600">En compras +$100</p>
+                <p className="font-bold text-sm text-gray-800">{t('Free Shipping')}</p>
+                <p className="text-xs text-gray-600">{t('Shipping nationwide')}</p>
               </div>
             </div>
 
@@ -81,8 +85,8 @@ export default function HomePage() {
                 <ShieldCheck className="h-7 w-7 text-white relative z-10" />
               </div>
               <div>
-                <p className="font-bold text-sm text-gray-800">Garantía</p>
-                <p className="text-xs text-gray-600">2 años extendida</p>
+                <p className="font-bold text-sm text-gray-800">{t('Official Warranty')}</p>
+                <p className="text-xs text-gray-600">{t('Up to 30 days')}</p>
               </div>
             </div>
 
@@ -93,8 +97,8 @@ export default function HomePage() {
                 <Zap className="h-7 w-7 text-white relative z-10" />
               </div>
               <div>
-                <p className="font-bold text-sm text-gray-800">Envío Rápido</p>
-                <p className="text-xs text-gray-600">24-48 horas</p>
+                <p className="font-bold text-sm text-gray-800">{t('Fast Shipping')}</p>
+                <p className="text-xs text-gray-600">{t('24-48 hours')}</p>
               </div>
             </div>
 
@@ -105,8 +109,8 @@ export default function HomePage() {
                 <Package className="h-7 w-7 text-white relative z-10" />
               </div>
               <div>
-                <p className="font-bold text-sm text-gray-800">Seguro</p>
-                <p className="text-xs text-gray-600">100% protegido</p>
+                <p className="font-bold text-sm text-gray-800">{t('Secure Payment')}</p>
+                <p className="text-xs text-gray-600">{t('100% protected payments')}</p>
               </div>
             </div>
 
@@ -117,8 +121,8 @@ export default function HomePage() {
                 <Award className="h-7 w-7 text-white relative z-10" />
               </div>
               <div>
-                <p className="font-bold text-sm text-gray-800">Calidad</p>
-                <p className="text-xs text-gray-600">Certificada</p>
+                <p className="font-bold text-sm text-gray-800">{t('Certified Quality')}</p>
+                <p className="text-xs text-gray-600">{t('Certified')}</p>
               </div>
             </div>
 
@@ -133,8 +137,8 @@ export default function HomePage() {
                 </div>
               </div>
               <div>
-                <p className="font-bold text-sm text-gray-800">Seguro</p>
-                <p className="text-xs text-gray-600">Compra protegida</p>
+                <p className="font-bold text-sm text-gray-800">{t('Protected Purchase')}</p>
+                <p className="text-xs text-gray-600">{t('Purchase protected')}</p>
               </div>
             </div>
           </div>
@@ -142,7 +146,7 @@ export default function HomePage() {
       </section>
 
       <HomepageProducts 
-        title="Recién Llegados" 
+        title={t('New Arrivals')} 
         limit={5}
       />
 
@@ -160,37 +164,38 @@ export default function HomePage() {
                   className="text-4xl md:text-5xl lg:text-7xl font-bold text-balance leading-tight drop-shadow-lg"
                   style={{ color: activeCTAs[0].textColor || "#ffffff" }}
                 >
-                  {activeCTAs[0].title}
+                  {language === "pt" ? activeCTAs[0].title_pt || activeCTAs[0].title : activeCTAs[0].title}
                 </h2>
                 <p
                   className="text-lg md:text-xl lg:text-2xl opacity-95 text-pretty max-w-lg drop-shadow-md"
                   style={{ color: activeCTAs[0].textColor || "#ffffff" }}
                 >
-                  {activeCTAs[0].description}
+                  {language === "pt" ? activeCTAs[0].description_pt || activeCTAs[0].description : activeCTAs[0].description}
                 </p>
                 <Button
                   size="lg"
-                  variant="secondary"
-                  className="mt-6 h-14 px-10 text-lg shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300"
+                  className="mt-6 h-14 px-10 text-lg shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black hover:from-yellow-500 hover:via-yellow-600 hover:to-yellow-700 border-2 border-yellow-600"
                 >
-                  {activeCTAs[0].buttonText}
+                  {language === "pt" ? activeCTAs[0].buttonText_pt || activeCTAs[0].buttonText : activeCTAs[0].buttonText}
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </div>
-              <div className="relative h-[400px] md:h-[500px] overflow-hidden">
+              <div className="relative h-[400px] md:h-[500px] overflow-hidden p-8">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent z-10 md:hidden" />
-                <Image
-                  src={activeCTAs[0].imageDesktop || "/placeholder.svg"}
-                  alt={activeCTAs[0].title}
-                  fill
-                  className="object-cover hidden md:block group-hover:scale-110 transition-transform duration-700"
-                />
-                <Image
-                  src={activeCTAs[0].imageMobile || "/placeholder.svg"}
-                  alt={activeCTAs[0].title}
-                  fill
-                  className="object-cover md:hidden group-hover:scale-110 transition-transform duration-700"
-                />
+                <div className="relative w-full h-full flex items-center justify-center">
+                  <Image
+                    src={activeCTAs[0].imageDesktop || "/placeholder.svg"}
+                    alt={activeCTAs[0].title}
+                    fill
+                    className="object-contain hidden md:block group-hover:scale-110 transition-transform duration-700"
+                  />
+                  <Image
+                    src={activeCTAs[0].imageMobile || "/placeholder.svg"}
+                    alt={activeCTAs[0].title}
+                    fill
+                    className="object-contain md:hidden group-hover:scale-110 transition-transform duration-700"
+                  />
+                </div>
               </div>
             </div>
           </Link>
@@ -198,7 +203,7 @@ export default function HomePage() {
       )}
 
       <HomepageProducts 
-        title="Más Vendidos" 
+        title={t('Best Sellers')} 
         limit={5}
       />
     </div>

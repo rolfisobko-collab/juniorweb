@@ -3,13 +3,14 @@ import { defaultLegalContent } from "@/lib/legal-content-data"
 import { Calendar, Mail, Phone } from "lucide-react"
 
 interface LegalPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
-export default function LegalPage({ params }: LegalPageProps) {
-  const content = defaultLegalContent.find((item) => item.slug === params.slug)
+export default async function LegalPage({ params }: LegalPageProps) {
+  const { slug } = await params
+  const content = defaultLegalContent.find((item) => item.slug === slug)
 
   if (!content) {
     notFound()

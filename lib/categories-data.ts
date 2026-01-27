@@ -53,18 +53,35 @@ let categoriesStore: Category[] = [
   },
 ]
 
-export const getCategories = (): Category[] => {
-  // En producción, esto haría un fetch al backend
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem("techzone_categories")
-    if (stored) {
-      try {
-        categoriesStore = JSON.parse(stored)
-      } catch (e) {
-        console.error("Error parsing categories:", e)
-      }
+export const getCategories = async (): Promise<Category[]> => {
+  try {
+    const response = await fetch('/api/categories')
+    if (!response.ok) {
+      throw new Error('Failed to fetch categories')
     }
+    const categoriesData = await response.json()
+    
+    // Transformar datos de la BD al formato esperado
+    return categoriesData.map((cat: any) => ({
+      id: cat.key,
+      name: cat.name,
+      slug: cat.slug,
+      description: cat.description,
+      subcategories: cat.subcategories.map((sub: any) => ({
+        id: sub.id,
+        name: sub.name,
+        slug: sub.slug
+      }))
+    }))
+  } catch (error) {
+    console.error('Error fetching categories from API:', error)
+    // Fallback a datos hardcoded
+    return categoriesStore
   }
+}
+
+export const getCategoriesSync = (): Category[] => {
+  // Para llamadas síncronas (server-side) o fallback
   return categoriesStore
 }
 
@@ -75,4 +92,4 @@ export const setCategories = (categories: Category[]) => {
   }
 }
 
-export const categories: Category[] = getCategories()
+export const categories = categoriesStore

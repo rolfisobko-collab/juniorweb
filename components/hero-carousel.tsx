@@ -3,108 +3,130 @@
 import { useState, useEffect } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import type { CarouselSlide } from "@/lib/carousel-data"
+import { useTranslation } from "@/lib/i18n/translation-provider"
 
-interface HeroCarouselProps {
-  slides: CarouselSlide[]
-}
+export function HeroCarousel() {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const { language } = useTranslation()
 
-export function HeroCarousel({ slides }: HeroCarouselProps) {
-  const [currentSlide, setCurrentSlide] = useState(0)
-  const activeSlides = slides.filter((s) => s.isActive).sort((a, b) => a.position - b.position)
+  // Imágenes según el idioma
+  const slides = language === "pt" ? [
+    {
+      desktop: "https://i.ibb.co/20fSKDrq/1-post-br.jpg",
+      mobile: "https://i.ibb.co/8n95Kj6S/1-hist-br.jpg"
+    },
+    {
+      desktop: "https://i.ibb.co/YFkkyqpR/2-post-br.jpg", 
+      mobile: "https://i.ibb.co/Q74pBPfc/2-hist-br.jpg"
+    },
+    {
+      desktop: "https://i.ibb.co/YBVsJZTW/3-post-br.jpg",
+      mobile: "https://i.ibb.co/qMwb4863/3-hist-br.jpg"
+    },
+    {
+      desktop: "https://i.ibb.co/F210KS1/4-post-br.jpg",
+      mobile: "https://i.ibb.co/BV1RNtTw/4-hist-br.jpg"
+    }
+  ] : [
+    {
+      desktop: "https://i.ibb.co/wFHxQRGZ/1-post-es.jpg",
+      mobile: "https://i.ibb.co/S7d44bDC/1-hist-es.jpg"
+    },
+    {
+      desktop: "https://i.ibb.co/Bvp74MM/2-post-es.jpg", 
+      mobile: "https://i.ibb.co/0j8Q3kQz/2-hist-es.jpg"
+    },
+    {
+      desktop: "https://i.ibb.co/bMdBcZD4/3-post-es.jpg",
+      mobile: "https://i.ibb.co/ksQ7zMDT/3-hist-es.jpg"
+    },
+    {
+      desktop: "https://i.ibb.co/xqG2xjD5/4-post-es.jpg",
+      mobile: "https://i.ibb.co/N2gzVfsq/4-hist-es.jpg"
+    }
+  ]
 
   useEffect(() => {
-    if (activeSlides.length === 0) return
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % activeSlides.length)
+    if (slides.length <= 1) return
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % slides.length)
     }, 5000)
-    return () => clearInterval(timer)
-  }, [activeSlides.length])
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % activeSlides.length)
+    return () => clearInterval(interval)
+  }, [slides.length])
+
+  // Reset index when language changes
+  useEffect(() => {
+    setCurrentIndex(0)
+  }, [language])
+
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index)
   }
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + activeSlides.length) % activeSlides.length)
+  const goToPrevious = () => {
+    setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length)
   }
 
-  if (activeSlides.length === 0) return null
+  const goToNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % slides.length)
+  }
+
+  const currentSlide = slides[currentIndex]
 
   return (
-    <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden">
-      {activeSlides.map((slide, index) => {
-        const bgColor = slide.backgroundColor || "#1a1a1a"
-        const txtColor = slide.textColor || "#ffffff"
+    <div className="relative w-full h-[50vh] md:h-[70vh] lg:h-[80vh] overflow-hidden">
+      {/* Imágenes del carrusel - Responsive */}
+      <div className="relative w-full h-full">
+        {/* Imagen Desktop */}
+        <img
+          src={currentSlide.desktop}
+          alt={`Slide ${currentIndex + 1}`}
+          className="absolute inset-0 w-full h-full object-cover object-center hidden md:block"
+        />
+        
+        {/* Imagen Mobile */}
+        <img
+          src={currentSlide.mobile}
+          alt={`Slide ${currentIndex + 1}`}
+          className="absolute inset-0 w-full h-full object-cover object-center md:hidden"
+        />
+      </div>
 
-        return (
-          <div
-            key={slide.id}
-            className={`absolute inset-0 transition-opacity duration-700 ${
-              index === currentSlide ? "opacity-100" : "opacity-0"
-            }`}
-            style={{ backgroundColor: bgColor }}
-          >
-            <div className="container mx-auto px-4 h-full">
-              <div className="grid md:grid-cols-2 gap-8 items-center h-full">
-                <div className="space-y-6 z-10" style={{ color: txtColor }}>
-                  <p className="text-sm font-semibold tracking-wider uppercase opacity-80">{slide.subtitle}</p>
-                  <h1 className="text-5xl md:text-7xl font-bold leading-tight text-balance">{slide.title}</h1>
-                  <p className="text-lg md:text-xl opacity-90 max-w-lg text-pretty">{slide.description}</p>
-                  <Link href={slide.buttonLink || "/products"}>
-                    <Button
-                      size="lg"
-                      className="h-14 px-10 text-lg"
-                      style={{
-                        backgroundColor: txtColor,
-                        color: bgColor,
-                      }}
-                    >
-                      {slide.buttonText}
-                    </Button>
-                  </Link>
-                </div>
-                <div className="relative h-full hidden md:flex items-center justify-center">
-                  <img
-                    src={slide.image || "/placeholder.svg"}
-                    alt={slide.title}
-                    className="max-h-[500px] w-auto object-contain drop-shadow-2xl"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      })}
-
-      {activeSlides.length > 1 && (
+      {/* Controles de navegación */}
+      {slides.length > 1 && (
         <>
+          {/* Botones anterior/siguiente */}
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="absolute left-4 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background z-10"
-            onClick={prevSlide}
+            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-black rounded-full p-2 shadow-lg hidden md:flex"
+            onClick={goToPrevious}
           >
             <ChevronLeft className="h-6 w-6" />
           </Button>
+          
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="absolute right-4 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background z-10"
-            onClick={nextSlide}
+            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-black rounded-full p-2 shadow-lg hidden md:flex"
+            onClick={goToNext}
           >
             <ChevronRight className="h-6 w-6" />
           </Button>
 
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-            {activeSlides.map((_, index) => (
+          {/* Indicadores */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2">
+            {slides.map((_, index) => (
               <button
                 key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`h-2 rounded-full transition-all ${
-                  index === currentSlide ? "w-8 bg-white" : "w-2 bg-white/50"
+                className={`w-3 h-3 rounded-full transition-all ${
+                  index === currentIndex
+                    ? "bg-white w-8"
+                    : "bg-white/50 hover:bg-white/70"
                 }`}
+                onClick={() => goToSlide(index)}
               />
             ))}
           </div>

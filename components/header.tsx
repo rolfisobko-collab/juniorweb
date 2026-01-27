@@ -4,7 +4,7 @@ import type React from "react"
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -19,9 +19,9 @@ import { ShoppingCart, Heart, User, Search, Menu, ChevronDown, ArrowRight, Grid3
 import { useAuth } from "@/lib/auth-context"
 import { useCart } from "@/lib/cart-context"
 import { useFavorites } from "@/lib/favorites-context"
-import { CurrencySelector } from "./currency-selector"
+import { LanguageCurrencySelector } from "./language-currency-selector"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { categories } from "@/lib/categories-data"
+import { getCategories, getCategoriesSync } from "@/lib/categories-data"
 import { BrandingLogo } from "./branding-logo"
 import { colors } from "@/lib/colors"
 
@@ -32,6 +32,20 @@ export function Header() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [categories, setCategories] = useState(getCategoriesSync())
+
+  // Cargar categorías desde la API al montar el componente
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const categoriesData = await getCategories()
+        setCategories(categoriesData)
+      } catch (error) {
+        console.error('Error loading categories:', error)
+      }
+    }
+    loadCategories()
+  }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,42 +78,28 @@ export function Header() {
             </div>
 
             <form onSubmit={handleSearch} className="hidden md:flex flex-1 items-center justify-center max-w-2xl mx-4">
-              <div className="relative w-full group">
-                {/* Contenedor principal */}
-                <div className="relative">
-                  {/* Barra de búsqueda elegante */}
-                  <div className="flex items-center bg-white border-2 border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 focus-within:border-blue-500 focus-within:shadow-xl">
-                    {/* Icono de búsqueda */}
-                    <div className="pl-4 pr-3">
-                      <Search className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" />
-                    </div>
-                    
-                    {/* Input profesional */}
-                    <Input
-                      type="text"
-                      placeholder="Buscar productos, marcas o categorías..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="flex-1 py-3 px-2 bg-transparent border-0 text-gray-800 placeholder:text-gray-500 text-sm font-medium focus:outline-none focus:ring-0"
-                    />
-                    
-                    {/* Botón de búsqueda profesional */}
-                    <Button
-                      type="submit"
-                      className="mr-2 px-5 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md text-sm"
-                    >
-                      Buscar
-                    </Button>
-                  </div>
-                  
-                  {/* Indicador sutil de estado */}
-                  <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-blue-600 scale-x-0 group-focus-within:scale-x-100 transition-transform duration-300 rounded-full"></div>
+              <div className="relative w-full">
+                <div className="relative group">
+                  <Input
+                    type="text"
+                    placeholder="Buscar..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full h-12 px-5 pr-12 text-base bg-gradient-to-r from-white to-gray-50/80 border border-gray-200/60 backdrop-blur-sm rounded-full focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-300/50 focus:shadow-lg focus:shadow-blue-200/30 transition-all duration-300 shadow-sm hover:shadow-md hover:border-gray-300/80 placeholder:text-gray-400"
+                  />
+                  <Button
+                    type="submit"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 border border-blue-400/30"
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </form>
 
             <div className="flex items-center gap-3 shrink-0">
-              <CurrencySelector />
+              <LanguageCurrencySelector />
               
               <Link href="/favorites">
                 <Button
@@ -136,8 +136,18 @@ export function Header() {
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="hover:bg-blue-50 hover:scale-110 transition-all">
-                      <User className="h-5 w-5" />
+                    <Button variant="ghost" size="icon" className="hover:bg-blue-50 hover:scale-110 transition-all relative">
+                      {user.avatar ? (
+                        <img 
+                          src={user.avatar} 
+                          alt={user.name}
+                          className="h-8 w-8 rounded-full object-cover border-2 border-blue-200"
+                        />
+                      ) : (
+                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <span className="sr-only">Menú de usuario</span>
                     </Button>
                   </DropdownMenuTrigger>
@@ -193,7 +203,7 @@ export function Header() {
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                       <Input
                         placeholder="Buscar productos..."
-                        className="pl-10"
+                        className="pl-10 h-11 bg-gradient-to-r from-white to-gray-50/80 border border-gray-200/60 backdrop-blur-sm rounded-lg focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-300/50 transition-all duration-300 shadow-sm hover:shadow-md hover:border-gray-300/80 placeholder:text-gray-400"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                       />

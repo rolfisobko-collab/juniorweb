@@ -1,8 +1,4 @@
 import { NextResponse } from "next/server"
-import { cookies } from "next/headers"
-
-import { prisma } from "@/lib/db"
-import { cookieOptions, generateRefreshToken, hashPassword, hashToken, signAccessToken } from "@/lib/auth-server"
 
 export async function POST(req: Request) {
   try {
@@ -15,37 +11,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 })
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } })
-    if (existing) {
-      return NextResponse.json({ error: "Email already in use" }, { status: 409 })
-    }
-
-    const passwordHash = await hashPassword(password)
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name,
-        passwordHash,
-      },
-      select: { id: true, email: true, name: true, avatar: true },
-    })
-
-    const accessToken = await signAccessToken({ sub: user.id, typ: "user" }, "15m")
-    const refreshToken = generateRefreshToken()
-
-    await prisma.refreshToken.create({
-      data: {
-        tokenHash: hashToken(refreshToken),
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
-      },
-    })
-
-    const jar = await cookies()
-    jar.set("tz_access", accessToken, { ...cookieOptions(), maxAge: 60 * 15 })
-    jar.set("tz_refresh", refreshToken, { ...cookieOptions(), maxAge: 60 * 60 * 24 * 30 })
-
-    return NextResponse.json({ user })
+    // Firebase manejará todo el registro y verificación
+    return NextResponse.json({ 
+      message: "Use Firebase Auth for registration",
+      useFirebaseAuth: true,
+      instructions: "Register directly with Firebase Auth client-side"
+    }, { status: 200 })
   } catch (_error) {
     return NextResponse.json({ error: "Register failed" }, { status: 500 })
   }

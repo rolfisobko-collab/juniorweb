@@ -1,16 +1,17 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Truck, Package, MapPin, Store, Clock, ChevronLeft, ChevronRight, Check, CreditCard } from "lucide-react"
-import ParaguayLocationSelectV2 from "@/components/paraguay-location-select-v2"
-import AEXShippingCalculator from "@/components/aex-shipping-calculator"
+import { Truck, Package, MapPin, Store, Clock, ChevronLeft, ChevronRight, Check, CreditCard, Home } from "lucide-react"
+import ParaguayLocationSelect from "@/components/paraguay-location-select"
 
 export default function CheckoutPage() {
+  const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
   const [shippingData, setShippingData] = useState({
     method: "",
@@ -18,8 +19,7 @@ export default function CheckoutPage() {
     address: "",
     city: "",
     department: "",
-    notes: "",
-    aexService: null as any
+    notes: ""
   })
   const [paymentData, setPaymentData] = useState({
     cardNumber: "",
@@ -28,6 +28,7 @@ export default function CheckoutPage() {
     cardCvv: ""
   })
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false)
+  const [isConvenirModalOpen, setIsConvenirModalOpen] = useState(false)
 
   // Mock data para el carrito
   const items = [
@@ -35,15 +36,15 @@ export default function CheckoutPage() {
       id: "1",
       product: {
         id: "1",
-        name: "iPhone 15 Pro Max",
-        price: 1199,
+        name: "iPhone 17 Pro Max",
+        price: 1299,
         weight: 0.22
       },
       quantity: 1
     }
   ]
   
-  const total = 1199
+  const total = 1299
   const user = { name: "Usuario Demo", email: "demo@email.com" }
 
   const shippingOptions = [
@@ -64,6 +65,15 @@ export default function CheckoutPage() {
       icon: Truck,
       time: "Según servicio",
       requiresAddress: true
+    },
+    {
+      id: "convenir",
+      name: "Envío a Convenir",
+      description: "Coordinamos envío directamente contigo",
+      cost: null, // Se calcula según ubicación
+      icon: Package,
+      time: "A coordinar",
+      requiresAddress: true
     }
   ]
 
@@ -83,13 +93,16 @@ export default function CheckoutPage() {
     setShippingData(prev => ({
       ...prev,
       method: option.id,
-      cost: option.cost || 0,
-      aexService: null
+      cost: option.cost || 0
     }))
     
-    // Si requiere dirección, abrir modal de ubicación
+    // Si requiere dirección, abrir modal de ubicación correspondiente
     if (option.requiresAddress) {
-      setIsLocationModalOpen(true)
+      if (option.id === "aex") {
+        setIsLocationModalOpen(true)
+      } else if (option.id === "convenir") {
+        setIsConvenirModalOpen(true)
+      }
     }
   }
 
@@ -97,26 +110,12 @@ export default function CheckoutPage() {
     address: string; 
     city: string; 
     department: string;
-    district: string;
-    neighborhood: string;
-    street: string;
-    number: string;
-    postalCode: string;
-    apartment: string;
   }) => {
     setShippingData(prev => ({
       ...prev,
       address: location.address,
-      city: location.district,
+      city: location.city,
       department: location.department
-    }))
-  }
-
-  const handleAEXSelect = (aexService: any) => {
-    setShippingData(prev => ({
-      ...prev,
-      aexService,
-      cost: aexService.cost
     }))
   }
 
@@ -161,9 +160,9 @@ export default function CheckoutPage() {
                 <p className={`text-sm font-medium ${
                   currentStep >= step ? "text-foreground" : "text-muted-foreground"
                 }`}>
-                  {step === 1 && "Información de Envío"}
-                  {step === 2 && "Método de Envío"}
-                  {step === 3 && "Información de Pago"}
+                  {step === 1 && "Método de Envío"}
+                  {step === 2 && "Información de Pago"}
+                  {step === 3 && "Compra Realizada"}
                 </p>
               </div>
               {step < 3 && (
@@ -176,79 +175,8 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* Step 1: Shipping Information */}
+      {/* Step 1: Shipping Method */}
       {currentStep === 1 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              Información de Envío
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="address">Dirección *</Label>
-                  <Input
-                    id="address"
-                    placeholder="Av. Eusebio Ayala 1234"
-                    value={shippingData.address}
-                    onChange={(e) => setShippingData(prev => ({ ...prev, address: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="city">Ciudad *</Label>
-                  <Select value={shippingData.city} onValueChange={(value) => setShippingData(prev => ({ ...prev, city: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar ciudad" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="asuncion">Asunción</SelectItem>
-                      <SelectItem value="ciudad-del-este">Ciudad del Este</SelectItem>
-                      <SelectItem value="encarnacion">Encarnación</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="department">Departamento *</Label>
-                  <Select value={shippingData.department} onValueChange={(value) => setShippingData(prev => ({ ...prev, department: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar departamento" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="asuncion">Asunción</SelectItem>
-                      <SelectItem value="alto-parana">Alto Paraná</SelectItem>
-                      <SelectItem value="central">Central</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notas (opcional)</Label>
-                  <Input
-                    id="notes"
-                    placeholder="Referencias adicionales"
-                    value={shippingData.notes}
-                    onChange={(e) => setShippingData(prev => ({ ...prev, notes: e.target.value }))}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-6">
-              <Button onClick={handleNextStep} className="flex items-center gap-2">
-                Siguiente: Método de Envío
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 2: Shipping Method */}
-      {currentStep === 2 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -293,7 +221,14 @@ export default function CheckoutPage() {
                                 <Button 
                                   variant="outline" 
                                   size="sm"
-                                  onClick={() => setIsLocationModalOpen(true)}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (option.id === "aex") {
+                                      setIsLocationModalOpen(true)
+                                    } else if (option.id === "convenir") {
+                                      setIsConvenirModalOpen(true)
+                                    }
+                                  }}
                                   className="w-full"
                                 >
                                   <MapPin className="h-4 w-4 mr-2" />
@@ -329,25 +264,16 @@ export default function CheckoutPage() {
               })}
             </div>
 
-            {/* AEX Calculator */}
-            {shippingData.method === "aex" && shippingData.city && shippingData.department && (
-              <div className="mt-6">
-                <AEXShippingCalculator
-                  city={shippingData.city}
-                  department={shippingData.department}
-                  weight={calculateTotalWeight()}
-                  onShippingSelect={handleAEXSelect}
-                />
-              </div>
-            )}
-
             <div className="flex justify-between pt-6">
               <Button variant="outline" onClick={handlePreviousStep} className="flex items-center gap-2">
                 <ChevronLeft className="h-4 w-4" />
                 Anterior
               </Button>
-              <Button onClick={handleNextStep} className="flex items-center gap-2" disabled={!shippingData.method || (shippingData.method === "aex" && !shippingData.aexService)}>
-                Siguiente: Confirmación
+              <Button onClick={handleNextStep} className="flex items-center gap-2" disabled={
+                !shippingData.method || 
+                (shippingData.method === "convenir" && !shippingData.address)
+              }>
+                Siguiente: Información de Pago
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -355,9 +281,10 @@ export default function CheckoutPage() {
         </Card>
       )}
 
-      {/* Step 3: Confirmation */}
-      {currentStep === 3 && (
+      {/* Step 2: Payment Information */}
+      {currentStep === 2 && (
         <div className="grid md:grid-cols-3 gap-8">
+          {/* Payment Form */}
           <div className="md:col-span-2">
             <Card>
               <CardHeader>
@@ -367,43 +294,48 @@ export default function CheckoutPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-4 p-4 border rounded-lg">
-                  <h4 className="font-medium">Información de Tarjeta</h4>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="card-number">Número de Tarjeta</Label>
-                      <Input 
-                        id="card-number" 
+                      <Label htmlFor="cardNumber">Número de Tarjeta *</Label>
+                      <Input
+                        id="cardNumber"
                         placeholder="1234 5678 9012 3456"
                         value={paymentData.cardNumber}
                         onChange={(e) => setPaymentData(prev => ({ ...prev, cardNumber: e.target.value }))}
+                        maxLength={19}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="card-name">Nombre en la Tarjeta</Label>
-                      <Input 
-                        id="card-name" 
-                        placeholder="JUAN PEREZ"
+                      <Label htmlFor="cardName">Nombre del Titular *</Label>
+                      <Input
+                        id="cardName"
+                        placeholder="Nombre del titular"
                         value={paymentData.cardName}
                         onChange={(e) => setPaymentData(prev => ({ ...prev, cardName: e.target.value }))}
                       />
                     </div>
+                  </div>
+                  <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="card-expiry">Vencimiento</Label>
-                      <Input 
-                        id="card-expiry" 
+                      <Label htmlFor="cardExpiry">Vencimiento *</Label>
+                      <Input
+                        id="cardExpiry"
                         placeholder="MM/AA"
                         value={paymentData.cardExpiry}
                         onChange={(e) => setPaymentData(prev => ({ ...prev, cardExpiry: e.target.value }))}
+                        maxLength={5}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="card-cvv">CVV</Label>
-                      <Input 
-                        id="card-cvv" 
+                      <Label htmlFor="cardCvv">CVV *</Label>
+                      <Input
+                        id="cardCvv"
                         placeholder="123"
                         value={paymentData.cardCvv}
                         onChange={(e) => setPaymentData(prev => ({ ...prev, cardCvv: e.target.value }))}
+                        maxLength={4}
+                        type="password"
                       />
                     </div>
                   </div>
@@ -414,43 +346,32 @@ export default function CheckoutPage() {
                     <ChevronLeft className="h-4 w-4" />
                     Anterior
                   </Button>
-                  <Button className="flex items-center gap-2">
-                    Confirmar Pedido
-                    <Check className="h-4 w-4" />
+                  <Button onClick={handleNextStep} className="flex items-center gap-2">
+                    Realizar Compra
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Order Summary */}
-          <div>
+          {/* Order Summary Sidebar */}
+          <div className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Resumen del Pedido</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  {items.map((item) => (
-                    <div key={item.id} className="flex justify-between text-sm">
-                      <span>{item.product.name} x{item.quantity}</span>
-                      <span>${(item.product.price * item.quantity).toFixed(2)}</span>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="space-y-2 pt-4 border-t">
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>Gs. {total.toLocaleString('es-PY')}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between">
                     <span>Envío</span>
-                    <span>{shippingData.cost === 0 ? "Gratis" : `Gs. ${shippingData.cost.toLocaleString('es-PY')}`}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Impuestos</span>
-                    <span>${(total * 0.1).toFixed(2)}</span>
+                    <span>
+                      {shippingData.cost === 0 ? "Gratis" : shippingData.cost === null ? "A calcular" : `Gs. ${shippingData.cost.toLocaleString('es-PY')}`}
+                    </span>
                   </div>
                 </div>
                 
@@ -458,7 +379,7 @@ export default function CheckoutPage() {
                   <div className="flex justify-between items-baseline">
                     <span className="font-semibold">Total</span>
                     <span className="font-bold text-2xl">
-                      Gs. {calculateFinalTotal().toLocaleString('es-PY')}
+                      Gs. {(total + (shippingData.cost || 0)).toLocaleString('es-PY')}
                     </span>
                   </div>
                 </div>
@@ -468,10 +389,78 @@ export default function CheckoutPage() {
         </div>
       )}
 
+      {/* Step 3: Order Success */}
+      {currentStep === 3 && (
+        <div className="max-w-2xl mx-auto">
+          <Card>
+            <CardContent className="p-12 text-center">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Check className="w-10 h-10 text-green-600" />
+              </div>
+              
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                ¡Compra Realizada con Éxito!
+              </h1>
+              
+              <p className="text-lg text-gray-600 mb-8">
+                Felicitaciones! Tu pedido ha sido procesado correctamente y está siendo preparado para envío.
+              </p>
+              
+              <div className="bg-gray-50 rounded-lg p-6 mb-8">
+                <h3 className="font-semibold mb-4">Resumen del Pedido</h3>
+                <div className="space-y-2 text-left">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Número de Orden:</span>
+                    <span className="font-medium">#ORD-2024-{Math.random().toString(36).substr(2, 9).toUpperCase()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Total Pagado:</span>
+                    <span className="font-medium">Gs. {(total + (shippingData.cost || 0)).toLocaleString('es-PY')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Método de Envío:</span>
+                    <span className="font-medium">{shippingOptions.find(opt => opt.id === shippingData.method)?.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Dirección:</span>
+                    <span className="font-medium">{shippingData.address || "Retiro en local"}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button 
+                  onClick={() => router.push('/orders')}
+                  className="flex items-center gap-2"
+                >
+                  <Package className="h-4 w-4" />
+                  Ver Mis Órdenes
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => router.push('/')}
+                  className="flex items-center gap-2"
+                >
+                  <Home className="h-4 w-4" />
+                  Volver al Inicio
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Location Modal */}
-      <ParaguayLocationSelectV2
+      <ParaguayLocationSelect
         isOpen={isLocationModalOpen}
         onClose={() => setIsLocationModalOpen(false)}
+        onLocationSelect={handleLocationSelect}
+      />
+
+      {/* Convenir Modal */}
+      <ParaguayLocationSelect
+        isOpen={isConvenirModalOpen}
+        onClose={() => setIsConvenirModalOpen(false)}
         onLocationSelect={handleLocationSelect}
       />
     </div>

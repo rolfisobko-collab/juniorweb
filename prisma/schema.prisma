@@ -25,7 +25,13 @@ model Product {
   inStock     Boolean
   stockQuantity Int     @default(0)
   featured    Boolean  @default(false)
-  weight      Float?   @default(0.5) // Peso en kg para cálculo de envío
+  
+  // Campos para AEX - Envíos
+  weight      Float    @default(0.5)  // Peso en kg
+  length      Float    @default(20)   // Largo en cm
+  width       Float    @default(15)   // Ancho en cm
+  height      Float    @default(10)   // Alto en cm
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -44,10 +50,12 @@ model User {
   name         String
   passwordHash String
   avatar       String?
+  emailVerified DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   refreshTokens RefreshToken[]
+  verificationCodes VerificationCode[]
   cart          Cart?
   favorites     Favorite[]
   addresses     UserAddress[]
@@ -328,4 +336,17 @@ model ExchangeRate {
   isActive    Boolean  @default(true)
   updatedAt   DateTime @updatedAt
   createdAt   DateTime @default(now())
+}
+
+model VerificationCode {
+  id        String   @id @default(cuid())
+  code      String
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
