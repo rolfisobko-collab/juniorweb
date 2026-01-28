@@ -16,6 +16,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Eye, Package } from "lucide-react"
 import PanelLayout from "@/components/panel-layout"
+import AEXLabelPrint from "@/components/aex-label-print"
 
 interface OrderItem {
   id: string
@@ -23,6 +24,10 @@ interface OrderItem {
   image: string
   price: number
   quantity: number
+  weight?: number
+  length?: number
+  width?: number
+  height?: number
 }
 
 interface Order {
@@ -31,6 +36,12 @@ interface Order {
   status: "processing" | "shipped" | "delivered" | "cancelled"
   total: number
   items: OrderItem[]
+  shippingMethod?: string
+  shippingCity?: string
+  shippingState?: string
+  shippingAddress?: string
+  contactEmail?: string
+  contactPhone?: string
 }
 
 function OrdersContent() {
@@ -146,6 +157,7 @@ function OrdersContent() {
               <TableHead>Fecha</TableHead>
               <TableHead>Items</TableHead>
               <TableHead>Total</TableHead>
+              <TableHead>Envío</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
@@ -157,6 +169,32 @@ function OrdersContent() {
                 <TableCell>{new Date(order.createdAt).toLocaleDateString("es-ES")}</TableCell>
                 <TableCell>{order.items.length} producto(s)</TableCell>
                 <TableCell className="font-semibold">${order.total.toLocaleString()}</TableCell>
+                <TableCell>
+                  <div className="space-y-1">
+                    <div className="text-sm">
+                      {order.shippingMethod === "aex" && (
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                          🚚 AEX
+                        </Badge>
+                      )}
+                      {order.shippingMethod === "convenir" && (
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">
+                          🏪 Convenir
+                        </Badge>
+                      )}
+                      {order.shippingMethod === "local" && (
+                        <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                          🏠 Retiro Local
+                        </Badge>
+                      )}
+                    </div>
+                    {order.shippingCity && (
+                      <div className="text-xs text-muted-foreground">
+                        {order.shippingCity}, {order.shippingState}
+                      </div>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell>
                   <Select
                     value={order.status}
@@ -175,56 +213,123 @@ function OrdersContent() {
                   </Select>
                 </TableCell>
                 <TableCell className="text-right">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedOrder(order)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
-                      <DialogHeader>
-                        <DialogTitle>Detalles del Pedido</DialogTitle>
-                        <DialogDescription>ID: {order.id}</DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Fecha</p>
-                            <p className="font-medium">{new Date(order.createdAt).toLocaleDateString("es-ES")}</p>
+                  <div className="flex items-center gap-2">
+                    {order.shippingMethod === "aex" && (
+                      <AEXLabelPrint
+                        orderId={order.id}
+                        origin="Asunción"
+                        destination={`${order.shippingCity}, ${order.shippingState}`}
+                        packages={order.items.map(item => ({
+                          peso: item.weight || 1,
+                          largo: item.length || 15,
+                          ancho: item.width || 10,
+                          alto: item.height || 5,
+                          descripcion: item.name
+                        }))}
+                        recipient={{
+                          name: "Cliente",
+                          phone: order.contactPhone || "",
+                          email: order.contactEmail || ""
+                        }}
+                        />
+                    )}
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="sm" onClick={() => setSelectedOrder(order)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>Detalles del Pedido</DialogTitle>
+                          <DialogDescription>ID: {order.id}</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Fecha</p>
+                              <p className="font-medium">{new Date(order.createdAt).toLocaleDateString("es-ES")}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Estado</p>
+                              <Badge className={getStatusColor(order.status)}>{getStatusLabel(order.status)}</Badge>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Estado</p>
-                            <Badge className={getStatusColor(order.status)}>{getStatusLabel(order.status)}</Badge>
-                          </div>
-                        </div>
 
-                        <div>
-                          <h4 className="font-semibold mb-3">Productos</h4>
-                          <div className="space-y-3">
-                            {order.items.map((item, index) => (
-                              <div key={index} className="flex items-center gap-4 p-3 border rounded-lg">
-                                <Package className="h-8 w-8 text-muted-foreground" />
-                                <div className="flex-1">
-                                  <p className="font-medium">{item.name}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    Cantidad: {item.quantity} × ${item.price.toLocaleString()}
-                                  </p>
-                                </div>
-                                <p className="font-semibold">${(item.quantity * item.price).toLocaleString()}</p>
+                          {/* Información de Envío */}
+                          <div>
+                            <h4 className="font-semibold mb-3">Información de Envío</h4>
+                            <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 rounded-lg">
+                              <div>
+                                <p className="text-sm text-muted-foreground">Método</p>
+                                <p className="font-medium">
+                                  {order.shippingMethod === "aex" && "🚚 AEX"}
+                                  {order.shippingMethod === "convenir" && "🏪 Convenir"}
+                                  {order.shippingMethod === "local" && "🏠 Retiro Local"}
+                                  {!order.shippingMethod && "No especificado"}
+                                </p>
                               </div>
-                            ))}
+                              <div>
+                                <p className="text-sm text-muted-foreground">Ubicación</p>
+                                <p className="font-medium">
+                                  {order.shippingCity && order.shippingState 
+                                    ? `${order.shippingCity}, ${order.shippingState}`
+                                    : "No especificado"
+                                  }
+                                </p>
+                              </div>
+                              {order.shippingAddress && (
+                                <div className="col-span-2">
+                                  <p className="text-sm text-muted-foreground">Dirección</p>
+                                  <p className="font-medium">{order.shippingAddress}</p>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="border-t pt-4">
-                          <div className="flex justify-between text-lg font-semibold">
-                            <span>Total</span>
-                            <span>${order.total.toLocaleString()}</span>
+                          {/* Información de Contacto */}
+                          <div>
+                            <h4 className="font-semibold mb-3">Información de Contacto</h4>
+                            <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 rounded-lg">
+                              <div>
+                                <p className="text-sm text-muted-foreground">Email</p>
+                                <p className="font-medium">{order.contactEmail || "No especificado"}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-muted-foreground">Teléfono</p>
+                                <p className="font-medium">{order.contactPhone || "No especificado"}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold mb-3">Productos</h4>
+                            <div className="space-y-3">
+                              {order.items.map((item, index) => (
+                                <div key={index} className="flex items-center gap-4 p-3 border rounded-lg">
+                                  <Package className="h-8 w-8 text-muted-foreground" />
+                                  <div className="flex-1">
+                                    <p className="font-medium">{item.name}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      Cantidad: {item.quantity} × ${item.price.toLocaleString()}
+                                    </p>
+                                  </div>
+                                  <p className="font-semibold">${(item.quantity * item.price).toLocaleString()}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="border-t pt-4">
+                            <div className="flex justify-between text-lg font-semibold">
+                              <span>Total</span>
+                              <span>${order.total.toLocaleString()}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

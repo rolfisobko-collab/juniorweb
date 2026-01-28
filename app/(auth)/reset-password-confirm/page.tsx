@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,7 @@ import { Lock, Eye, EyeOff, CheckCircle, AlertCircle, Loader2 } from "lucide-rea
 import { getAuth, confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 
-export default function ResetPasswordConfirmPage() {
+function ResetPasswordConfirmContent() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -245,5 +245,13 @@ export default function ResetPasswordConfirmPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ResetPasswordConfirmPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordConfirmContent />
+    </Suspense>
   )
 }

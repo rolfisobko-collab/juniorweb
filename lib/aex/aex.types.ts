@@ -181,6 +181,7 @@ export interface AEXConfig {
   sandbox: boolean
   clave_publica: string
   clave_privada: string
+  codigo_sesion: string
   base_url: string
 }
 

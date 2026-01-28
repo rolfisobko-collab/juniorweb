@@ -37,6 +37,7 @@ export function createAEXInstance(config: {
   sandbox: boolean
   clave_publica: string
   clave_privada: string
+  codigo_sesion: string
 }) {
   const fullConfig = {
     ...config,

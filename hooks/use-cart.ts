@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect } from "react"
+import React, { createContext, useContext, useState, useEffect } from "react"
 
 interface CartItem {
   id: string
@@ -22,7 +22,7 @@ interface CartContextType {
   clearCart: () => void
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined)
+export const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function useCart() {
   const context = useContext(CartContext)
@@ -83,8 +83,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <CartContext.Provider value={{ items, total, addItem, removeItem, updateQuantity, clearCart }}>
-      {children}
-    </CartContext.Provider>
+    React.createElement(CartContext.Provider, { value: { items, total, addItem, removeItem, updateQuantity, clearCart } }, children)
   )
 }

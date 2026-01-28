@@ -232,7 +232,7 @@ export class AEXService {
   /**
    * Verifica si hay un token válido
    */
-  hasValidToken(): boolean {
+  async hasValidToken(): Promise<boolean> {
     return this.authManager.hasValidToken()
   }
 

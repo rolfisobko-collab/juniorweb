@@ -19,12 +19,17 @@ export async function POST(req: Request) {
     const result = await prisma.$executeRaw`
       INSERT INTO "Product" (
         id, name, brand, description, price, "categoryKey", image, 
-        rating, reviews, "inStock", "stockQuantity", featured, 
+        rating, reviews, "inStock", "stockQuantity", featured,
+        weight, length, width, height,
+        "valorDeclarado", "descripcionAduana", "categoriaArancelaria", "paisOrigen",
         "createdAt", "updatedAt"
       ) VALUES (
         ${productId}, ${body.name}, ${body.brand}, ${body.description}, 
         ${body.price}, ${body.categoryKey}, ${body.image}, 
         0, 0, ${body.inStock ?? true}, 50, ${body.featured ?? false},
+        ${body.weight ?? 0.5}, ${body.length ?? 20}, ${body.width ?? 15}, ${body.height ?? 10},
+        ${body.valorDeclarado || null}, ${body.descripcionAduana || null}, 
+        ${body.categoriaArancelaria || null}, ${body.paisOrigen || null},
         NOW(), NOW()
       )
       RETURNING id, name, brand, price, "categoryKey", image
@@ -37,7 +42,7 @@ export async function POST(req: Request) {
       SELECT id, name, brand, price, "categoryKey", image, description, rating, reviews, "inStock"
       FROM "Product" 
       WHERE id = ${productId}
-    `
+    ` as any[]
 
     return NextResponse.json({ 
       success: true,

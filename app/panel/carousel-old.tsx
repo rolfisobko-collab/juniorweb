@@ -22,8 +22,15 @@ import { useToast } from "@/hooks/use-toast"
 
 interface CarouselSlide {
   id: number
-  imageDesktop: string
+  title: string
+  subtitle: string
+  description: string
+  buttonText: string
+  buttonLink: string
+  image: string
   imageMobile: string
+  backgroundColor: string
+  textColor: string
   position: number
   isActive: boolean
 }

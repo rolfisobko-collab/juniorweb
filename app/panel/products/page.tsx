@@ -18,7 +18,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Pencil, Trash2, Search, Building, Eye } from "lucide-react"
+import { Plus, Pencil, Trash2, Search, Building, Eye, Package, FileText } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { ImageUpload } from "@/components/image-upload"
 import { MediaGallery } from "@/components/media-gallery"
@@ -56,6 +56,16 @@ export default function AdminProductsPage() {
     subcategory: "",
     images: [] as string[],
     videos: [] as string[],
+    // Campos de AEX - Dimensiones
+    weight: "",
+    length: "",
+    width: "",
+    height: "",
+    // Campos de AEX - Tributos
+    valorDeclarado: "",
+    descripcionAduana: "",
+    categoriaArancelaria: "",
+    paisOrigen: "",
   })
 
   // Cargar categorías y marcas desde la API
@@ -187,6 +197,16 @@ export default function AdminProductsPage() {
       images: formData.images, // Guardar todas las imágenes por si las necesitamos después
       videos: formData.videos,
       inStock: true,
+      // Campos de AEX - Dimensiones
+      weight: formData.weight ? Number.parseFloat(formData.weight) : 0.5,
+      length: formData.length ? Number.parseFloat(formData.length) : 20,
+      width: formData.width ? Number.parseFloat(formData.width) : 15,
+      height: formData.height ? Number.parseFloat(formData.height) : 10,
+      // Campos de AEX - Tributos
+      valorDeclarado: formData.valorDeclarado ? Number.parseFloat(formData.valorDeclarado) : null,
+      descripcionAduana: formData.descripcionAduana || null,
+      categoriaArancelaria: formData.categoriaArancelaria || null,
+      paisOrigen: formData.paisOrigen || null,
     }
 
     try {
@@ -266,6 +286,16 @@ export default function AdminProductsPage() {
       subcategory: product.subcategory || "",
       images: product.images || [product.image] || [],
       videos: product.videos || [],
+      // Campos de AEX - Dimensiones
+      weight: product.weight?.toString() || "",
+      length: product.length?.toString() || "",
+      width: product.width?.toString() || "",
+      height: product.height?.toString() || "",
+      // Campos de AEX - Tributos
+      valorDeclarado: product.valorDeclarado?.toString() || "",
+      descripcionAduana: product.descripcionAduana || "",
+      categoriaArancelaria: product.categoriaArancelaria || "",
+      paisOrigen: product.paisOrigen || "",
     })
     setIsDialogOpen(true)
   }
@@ -315,6 +345,16 @@ export default function AdminProductsPage() {
       subcategory: "",
       images: [],
       videos: [],
+      // Campos de AEX - Dimensiones
+      weight: "",
+      length: "",
+      width: "",
+      height: "",
+      // Campos de AEX - Tributos
+      valorDeclarado: "",
+      descripcionAduana: "",
+      categoriaArancelaria: "",
+      paisOrigen: "",
     })
     setEditingProduct(null)
   }
@@ -448,6 +488,127 @@ export default function AdminProductsPage() {
                       </div>
                     )}
                   </div>
+                  
+                  {/* Campos de AEX - Dimensiones */}
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Package className="h-5 w-5" />
+                      Dimensiones para Envío (AEX)
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="weight">Peso (kg)</Label>
+                        <Input
+                          id="weight"
+                          type="number"
+                          step="0.01"
+                          value={formData.weight}
+                          onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                          placeholder="0.5"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="length">Largo (cm)</Label>
+                        <Input
+                          id="length"
+                          type="number"
+                          step="0.1"
+                          value={formData.length}
+                          onChange={(e) => setFormData({ ...formData, length: e.target.value })}
+                          placeholder="20"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="width">Ancho (cm)</Label>
+                        <Input
+                          id="width"
+                          type="number"
+                          step="0.1"
+                          value={formData.width}
+                          onChange={(e) => setFormData({ ...formData, width: e.target.value })}
+                          placeholder="15"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="height">Alto (cm)</Label>
+                        <Input
+                          id="height"
+                          type="number"
+                          step="0.1"
+                          value={formData.height}
+                          onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                          placeholder="10"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Campos de AEX - Tributos */}
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Tributos y Aduanas (AEX)
+                    </h3>
+                    <div className="grid gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="valorDeclarado">Valor Declarado (USD)</Label>
+                          <Input
+                            id="valorDeclarado"
+                            type="number"
+                            step="0.01"
+                            value={formData.valorDeclarado}
+                            onChange={(e) => setFormData({ ...formData, valorDeclarado: e.target.value })}
+                            placeholder="189.00"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="paisOrigen">País de Origen</Label>
+                          <Select
+                            value={formData.paisOrigen}
+                            onValueChange={(value) => setFormData({ ...formData, paisOrigen: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar país" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="China">China</SelectItem>
+                              <SelectItem value="Estados Unidos">Estados Unidos</SelectItem>
+                              <SelectItem value="Japón">Japón</SelectItem>
+                              <SelectItem value="Corea del Sur">Corea del Sur</SelectItem>
+                              <SelectItem value="Alemania">Alemania</SelectItem>
+                              <SelectItem value="Brasil">Brasil</SelectItem>
+                              <SelectItem value="Argentina">Argentina</SelectItem>
+                              <SelectItem value="Importado">Importado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="categoriaArancelaria">Categoría Arancelaria (HS Code)</Label>
+                        <Input
+                          id="categoriaArancelaria"
+                          value={formData.categoriaArancelaria}
+                          onChange={(e) => setFormData({ ...formData, categoriaArancelaria: e.target.value })}
+                          placeholder="3303.00.00"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Ej: 3303.00.00 (Perfumería), 8517.12.00 (Smartphones), 8471.30.00 (Laptops)
+                        </p>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="descripcionAduana">Descripción para Aduana</Label>
+                        <Textarea
+                          id="descripcionAduana"
+                          value={formData.descripcionAduana}
+                          onChange={(e) => setFormData({ ...formData, descripcionAduana: e.target.value })}
+                          placeholder="Descripción detallada para documentos de aduana"
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="space-y-4">
                     <MediaGallery
                       images={formData.images}

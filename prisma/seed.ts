@@ -331,18 +331,27 @@ async function main() {
 
   // Seed exchange rates
   for (const rate of DEFAULT_EXCHANGE_RATES) {
-    await prisma.exchangeRate.upsert({
-      where: { currency: rate.currency },
-      update: {
-        rate: rate.rate,
-        isActive: rate.isActive,
-      },
-      create: {
-        currency: rate.currency,
-        rate: rate.rate,
-        isActive: rate.isActive,
-      },
+    const existingRate = await prisma.exchangeRate.findFirst({
+      where: { currency: rate.currency }
     })
+    
+    if (existingRate) {
+      await prisma.exchangeRate.update({
+        where: { id: existingRate.id },
+        data: {
+          rate: rate.rate,
+          isActive: rate.isActive,
+        },
+      })
+    } else {
+      await prisma.exchangeRate.create({
+        data: {
+          currency: rate.currency,
+          rate: rate.rate,
+          isActive: rate.isActive,
+        },
+      })
+    }
   }
 }
 

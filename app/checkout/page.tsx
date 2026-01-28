@@ -1,17 +1,21 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Truck, Package, MapPin, Store, Clock, ChevronLeft, ChevronRight, Check, CreditCard, Home } from "lucide-react"
+import { Truck, Package, MapPin, Store, Clock, ChevronLeft, ChevronRight, Check, CreditCard, Home, Loader2 } from "lucide-react"
 import ParaguayLocationSelect from "@/components/paraguay-location-select"
+import { useAEXShipping } from "@/hooks/use-aex-shipping"
+import { useToast } from "@/hooks/use-toast"
+import BancardCheckout from "@/components/bancard-checkout"
 
 export default function CheckoutPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [currentStep, setCurrentStep] = useState(1)
   const [shippingData, setShippingData] = useState({
     method: "",
@@ -25,12 +29,95 @@ export default function CheckoutPage() {
     cardNumber: "",
     cardName: "",
     cardExpiry: "",
-    cardCvv: ""
+    cardCvv: "",
+    method: "bancard" // Método de pago por defecto
   })
+  const [bancardProcessId, setBancardProcessId] = useState<string | null>(null)
+  const [paymentLoading, setPaymentLoading] = useState(false)
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false)
   const [isConvenirModalOpen, setIsConvenirModalOpen] = useState(false)
+  
+  // Hook para cálculo de envío AEX
+  const { calculateShipping, loading: aexLoading, error: aexError, shippingOptions: aexServices } = useAEXShipping()
 
-  // Mock data para el carrito
+  // useEffect para autocalcular cuando los datos de envío están completos
+  useEffect(() => {
+    if (shippingData.method === "aex" && 
+        shippingData.city && 
+        shippingData.department && 
+        shippingData.address && 
+        !aexLoading &&
+        shippingData.cost === 0) { // Solo calcular si no hay costo previo
+      console.log('🔄 useEffect: Datos completos, calculando envío AEX automáticamente')
+      calculateAEXShipping()
+    }
+  }, [shippingData.city, shippingData.department, shippingData.address, shippingData.method])
+
+  // Función para generar process_id de Bancard
+  const generateBancardProcessId = async () => {
+    try {
+      setPaymentLoading(true)
+      const totalAmount = total + (shippingData.cost || 0)
+      
+      const response = await fetch('/api/bancard/create-single-buy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: totalAmount,
+          currency: "PYG",
+          description: `Compra TechZone - ${items.length} productos`,
+          shop_process_id: `TZ_${Date.now()}`
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setBancardProcessId(data.process_id)
+        toast({
+          title: "Formulario de pago listo",
+          description: "Formulario seguro de Bancard cargado correctamente"
+        })
+      } else {
+        throw new Error(data.error || 'Error generando process_id')
+      }
+    } catch (error) {
+      console.error('Error generando process_id:', error)
+      toast({
+        title: "Error en el pago",
+        description: "No se pudo inicializar el formulario de pago",
+        variant: "destructive"
+      })
+    } finally {
+      setPaymentLoading(false)
+    }
+  }
+
+  // Manejar éxito del pago
+  const handlePaymentSuccess = (response: any) => {
+    toast({
+      title: "¡Pago exitoso!",
+      description: "Tu compra ha sido procesada correctamente"
+    })
+    
+    // Aquí podrías redirigir a una página de confirmación
+    setTimeout(() => {
+      router.push('/checkout/success')
+    }, 2000)
+  }
+
+  // Manejar error en el pago
+  const handlePaymentError = (error: any) => {
+    toast({
+      title: "Error en el pago",
+      description: error.message || "Hubo un error procesando tu pago",
+      variant: "destructive"
+    })
+  }
+
+  // Mock data para el carrito con productos AEX
   const items = [
     {
       id: "1",
@@ -38,7 +125,14 @@ export default function CheckoutPage() {
         id: "1",
         name: "iPhone 17 Pro Max",
         price: 1299,
-        weight: 0.22
+        weight: 0.22,
+        length: 15,
+        width: 7.5,
+        height: 0.8,
+        valorDeclarado: 1299,
+        descripcionAduana: "iPhone 17 Pro Max 256GB - Smartphone premium",
+        categoriaArancelaria: "8517.13.00",
+        paisOrigen: "China"
       },
       quantity: 1
     }
@@ -46,6 +140,85 @@ export default function CheckoutPage() {
   
   const total = 1299
   const user = { name: "Usuario Demo", email: "demo@email.com" }
+
+  // Función para calcular envío AEX
+  const calculateAEXShipping = async () => {
+    console.log('🚀 Iniciando cálculo AEX...')
+    console.log('📊 Estado actual shippingData:', shippingData)
+    
+    // Obtener los valores más recientes del estado
+    const currentCity = shippingData.city
+    const currentDepartment = shippingData.department  
+    const currentAddress = shippingData.address
+    
+    console.log('📍 Datos para cálculo:', {
+      city: currentCity,
+      department: currentDepartment,
+      address: currentAddress,
+      method: shippingData.method
+    })
+    
+    if (!currentCity || !currentDepartment || !currentAddress) {
+      console.error('❌ Datos incompletos:', {
+        hasCity: !!currentCity,
+        hasDepartment: !!currentDepartment,
+        hasAddress: !!currentAddress
+      })
+      
+      toast({
+        title: "Datos incompletos",
+        description: "Por favor completa la dirección de envío",
+        variant: "destructive"
+      })
+      return
+    }
+
+    const shippingRequest = {
+      products: items.map(item => ({
+        id: item.product.id,
+        name: item.product.name,
+        weight: item.product.weight,
+        length: item.product.length,
+        width: item.product.width,
+        height: item.product.height,
+        valorDeclarado: item.product.valorDeclarado,
+        descripcionAduana: item.product.descripcionAduana,
+        categoriaArancelaria: item.product.categoriaArancelaria,
+        paisOrigen: item.product.paisOrigen,
+        quantity: item.quantity
+      })),
+      destination: {
+        city: currentCity,
+        department: currentDepartment,
+        address: currentAddress
+      }
+    }
+
+    console.log('� Enviando solicitud AEX:', shippingRequest)
+
+    const result = await calculateShipping(shippingRequest)
+    
+    console.log('📋 Resultado AEX:', result)
+    
+    if (result.success && result.shipping_cost) {
+      setShippingData(prev => ({
+        ...prev,
+        cost: result.shipping_cost || 0
+      }))
+      
+      toast({
+        title: "Envío calculado",
+        description: `Costo de envío: Gs. ${result.shipping_cost.toLocaleString('es-PY')}`
+      })
+    } else {
+      console.error('❌ Error en cálculo AEX:', result.error)
+      toast({
+        title: "Error al calcular envío",
+        description: result.error || "No se pudo calcular el costo de envío",
+        variant: "destructive"
+      })
+    }
+  }
 
   const shippingOptions = [
     {
@@ -96,11 +269,18 @@ export default function CheckoutPage() {
       cost: option.cost || 0
     }))
     
-    // Si requiere dirección, abrir modal de ubicación correspondiente
-    if (option.requiresAddress) {
-      if (option.id === "aex") {
+    // Si es AEX y ya hay dirección, calcular automáticamente
+    if (option.id === "aex") {
+      if (shippingData.city && shippingData.department && shippingData.address) {
+        // Pequeño delay para asegurar que el método se actualizó
+        setTimeout(() => calculateAEXShipping(), 100)
+      } else {
         setIsLocationModalOpen(true)
-      } else if (option.id === "convenir") {
+      }
+    }
+    // Si requiere dirección, abrir modal de ubicación correspondiente
+    else if (option.requiresAddress) {
+      if (option.id === "convenir") {
         setIsConvenirModalOpen(true)
       }
     }
@@ -111,12 +291,29 @@ export default function CheckoutPage() {
     city: string; 
     department: string;
   }) => {
+    console.log('📍 Ubicación seleccionada:', location)
+    
     setShippingData(prev => ({
       ...prev,
       address: location.address,
       city: location.city,
       department: location.department
     }))
+    
+    // Si el método seleccionado es AEX, calcular el envío automáticamente
+    // Usamos un callback para asegurar que tenemos el estado actualizado
+    setTimeout(() => {
+      setShippingData(currentData => {
+        console.log('🔄 Estado actualizado:', currentData)
+        
+        if (currentData.method === "aex" && currentData.city && currentData.department && currentData.address) {
+          console.log('🚚 Disparando cálculo automático de AEX')
+          calculateAEXShipping()
+        }
+        
+        return currentData
+      })
+    }, 200)
   }
 
   const calculateTotalWeight = () => {
@@ -239,8 +436,20 @@ export default function CheckoutPage() {
                           </div>
                           <div className="text-right">
                             <div className="text-2xl font-bold text-primary">
-                              {option.cost === 0 ? "Gratis" : option.cost === null ? "A calcular" : `Gs. ${option.cost.toLocaleString('es-PY')}`}
+                              {option.id === "aex" && aexLoading ? (
+                                <div className="flex items-center gap-2">
+                                  <Loader2 className="h-5 w-5 animate-spin" />
+                                  <span className="text-lg">Calculando...</span>
+                                </div>
+                              ) : option.id === "aex" && shippingData.method === "aex" && shippingData.cost > 0 ? (
+                                `Gs. ${shippingData.cost.toLocaleString('es-PY')}`
+                              ) : option.cost === 0 ? "Gratis" : option.cost === null ? "A calcular" : `Gs. ${option.cost.toLocaleString('es-PY')}`}
                             </div>
+                            {option.id === "aex" && aexError && (
+                              <div className="mt-1 text-sm text-red-600">
+                                Error: {aexError}
+                              </div>
+                            )}
                           </div>
                         </div>
                         {shippingData.method === option.id && (
@@ -253,6 +462,32 @@ export default function CheckoutPage() {
                               <div className="mt-2 text-sm text-green-600">
                                 <MapPin className="h-3 w-3 inline mr-1" />
                                 {shippingData.address}
+                              </div>
+                            )}
+                            {option.id === "aex" && shippingData.address && (
+                              <div className="mt-3">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    calculateAEXShipping()
+                                  }}
+                                  disabled={aexLoading}
+                                  className="w-full"
+                                >
+                                  {aexLoading ? (
+                                    <>
+                                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                      Recalculando...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Truck className="h-4 w-4 mr-2" />
+                                      Recalcular Envío
+                                    </>
+                                  )}
+                                </Button>
                               </div>
                             )}
                           </div>
@@ -294,62 +529,103 @@ export default function CheckoutPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="cardNumber">Número de Tarjeta *</Label>
-                      <Input
-                        id="cardNumber"
-                        placeholder="1234 5678 9012 3456"
-                        value={paymentData.cardNumber}
-                        onChange={(e) => setPaymentData(prev => ({ ...prev, cardNumber: e.target.value }))}
-                        maxLength={19}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cardName">Nombre del Titular *</Label>
-                      <Input
-                        id="cardName"
-                        placeholder="Nombre del titular"
-                        value={paymentData.cardName}
-                        onChange={(e) => setPaymentData(prev => ({ ...prev, cardName: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="cardExpiry">Vencimiento *</Label>
-                      <Input
-                        id="cardExpiry"
-                        placeholder="MM/AA"
-                        value={paymentData.cardExpiry}
-                        onChange={(e) => setPaymentData(prev => ({ ...prev, cardExpiry: e.target.value }))}
-                        maxLength={5}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cardCvv">CVV *</Label>
-                      <Input
-                        id="cardCvv"
-                        placeholder="123"
-                        value={paymentData.cardCvv}
-                        onChange={(e) => setPaymentData(prev => ({ ...prev, cardCvv: e.target.value }))}
-                        maxLength={4}
-                        type="password"
-                      />
+                {/* Selección de método de pago */}
+                <div className="space-y-4">
+                  <Label className="text-base font-medium">Método de Pago</Label>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div 
+                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                        paymentData.method === "bancard" 
+                          ? "border-blue-500 bg-blue-50" 
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                      onClick={() => setPaymentData(prev => ({ ...prev, method: "bancard" }))}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-8 bg-gradient-to-r from-blue-600 to-blue-800 rounded flex items-center justify-center">
+                          <CreditCard className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <div className="font-medium">Bancard vPOS</div>
+                          <div className="text-sm text-gray-600">Pago seguro con tarjeta de crédito/débito</div>
+                        </div>
+                        {paymentData.method === "bancard" && (
+                          <Check className="w-5 h-5 text-blue-600 ml-auto" />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
+
+                {/* Formulario de Bancard */}
+                {paymentData.method === "bancard" && (
+                  <div className="space-y-4">
+                    {!bancardProcessId ? (
+                      <div className="text-center py-8">
+                        <div className="mb-4">
+                          <CreditCard className="h-12 w-12 text-blue-600 mx-auto mb-2" />
+                          <h3 className="text-lg font-medium">Formulario de Pago Seguro</h3>
+                          <p className="text-gray-600">Serás redirigido al formulario seguro de Bancard</p>
+                        </div>
+                        <Button 
+                          onClick={generateBancardProcessId}
+                          disabled={paymentLoading}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          {paymentLoading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Inicializando pago...
+                            </>
+                          ) : (
+                            <>
+                              <CreditCard className="h-4 w-4 mr-2" />
+                              Continuar al Pago Seguro
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="flex items-center gap-2 text-green-700">
+                            <Check className="w-4 h-4" />
+                            <span className="text-sm font-medium">Formulario de pago seguro activo</span>
+                          </div>
+                        </div>
+                        <BancardCheckout
+                          processId={bancardProcessId}
+                          amount={total + (shippingData.cost || 0)}
+                          onSuccess={handlePaymentSuccess}
+                          onError={handlePaymentError}
+                          onCancel={() => {
+                            setBancardProcessId(null)
+                            toast({
+                              title: "Pago cancelado",
+                              description: "Has cancelado el proceso de pago"
+                            })
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="flex justify-between pt-6">
                   <Button variant="outline" onClick={handlePreviousStep} className="flex items-center gap-2">
                     <ChevronLeft className="h-4 w-4" />
                     Anterior
                   </Button>
-                  <Button onClick={handleNextStep} className="flex items-center gap-2">
-                    Realizar Compra
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                  {!bancardProcessId && (
+                    <Button 
+                      onClick={handleNextStep} 
+                      className="flex items-center gap-2"
+                      disabled={paymentData.method !== "bancard"}
+                    >
+                      Realizar Compra
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

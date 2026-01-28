@@ -27,22 +27,13 @@ export class AEXAuthManager {
   }
 
   /**
-   * Genera un código de sesión único
-   */
-  private generateSessionCode(): string {
-    const timestamp = Date.now().toString()
-    const random = Math.random().toString(36).substring(2)
-    return `${timestamp}_${random}`
-  }
-
-  /**
    * Solicita un nuevo token de autenticación a AEX
    */
   async authenticate(): Promise<string> {
     try {
       console.log('🔐 Iniciando autenticación con AEX...')
 
-      const codigoSesion = this.generateSessionCode()
+      const codigoSesion = this.config.codigo_sesion
       const clavePrivadaHash = this.generatePrivateKeyHash(
         this.config.clave_privada,
         codigoSesion

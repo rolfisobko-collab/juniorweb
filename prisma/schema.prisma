@@ -32,6 +32,12 @@ model Product {
   width       Float    @default(15)   // Ancho en cm
   height      Float    @default(10)   // Alto en cm
   
+  // Campos para AEX - Tributos y Aduanas
+  valorDeclarado    Float?  // Valor declarado para aduanas
+  descripcionAduana String? // Descripción para documentos de aduana
+  categoriaArancelaria String? // Código arancelario (HS code)
+  paisOrigen        String? @default("Importado") // País de origen
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

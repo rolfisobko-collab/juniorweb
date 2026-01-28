@@ -11,7 +11,7 @@ export async function requireAdminId() {
   if (!token) return null
 
   try {
-    const payload = await verifyAccessToken(token)
+    const payload = await verifyAccessToken(token!)
     if (payload.typ !== "admin" || typeof payload.sub !== "string") return null
     return payload.sub
   } catch {

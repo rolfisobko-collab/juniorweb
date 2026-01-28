@@ -3,11 +3,11 @@ import { prisma } from "@/lib/db"
 
 export async function PUT(req: Request) {
   try {
-    const url = new URL(req.url)
-    const id = url.pathname.split('/').pop()
-    if (!id) return NextResponse.json({ error: "Missing product ID" }, { status: 400 })
-
     const body = await req.json()
+    const id = body.id // Obtener ID del body en lugar de la URL
+    
+    if (!id) return NextResponse.json({ error: "Missing product ID" }, { status: 400 })
+    
     console.log('🔄 UPDATE SIMPLE - Updating product:', id, body)
 
     // Usar SQL directo para evitar problemas con weight
@@ -21,6 +21,14 @@ export async function PUT(req: Request) {
         "categoryKey" = ${body.categoryKey},
         image = ${body.image},
         "inStock" = ${body.inStock ?? true},
+        weight = ${body.weight ?? 0.5},
+        length = ${body.length ?? 20},
+        width = ${body.width ?? 15},
+        height = ${body.height ?? 10},
+        "valorDeclarado" = ${body.valorDeclarado || null},
+        "descripcionAduana" = ${body.descripcionAduana || null},
+        "categoriaArancelaria" = ${body.categoriaArancelaria || null},
+        "paisOrigen" = ${body.paisOrigen || null},
         "updatedAt" = NOW()
       WHERE id = ${id}
     `
@@ -30,7 +38,7 @@ export async function PUT(req: Request) {
       SELECT id, name, brand, price, "categoryKey", image, description, rating, reviews, "inStock"
       FROM "Product" 
       WHERE id = ${id}
-    `
+    ` as any[]
 
     console.log('✅ Product updated successfully')
     return NextResponse.json({ product: updatedProduct[0] })

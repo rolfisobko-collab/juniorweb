@@ -6,7 +6,7 @@ export async function createEmailTransporter() {
   if (process.env.NODE_ENV === 'development') {
     const testAccount = await nodemailer.createTestAccount()
     
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       host: 'smtp.ethereal.email',
       port: 587,
       secure: false,
@@ -18,7 +18,7 @@ export async function createEmailTransporter() {
   }
 
   // Para producción, configurar con variables de entorno
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '587'),
     secure: process.env.SMTP_SECURE === 'true',
